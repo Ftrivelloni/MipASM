@@ -1,6 +1,6 @@
-[![✗](https://img.shields.io/badge/Release-v2.0.0-ffb600.svg?style=for-the-badge)](https://github.com/agustin-golmar/Flex-Bison-Compiler/releases)
+[![✗](https://img.shields.io/badge/Release-v2.0.0-ffb600.svg?style=for-the-badge)](https://github.com/Ftrivelloni/MipASM)
 
-[![✗](https://github.com/agustin-golmar/Flex-Bison-Compiler/actions/workflows/pipeline.yaml/badge.svg?branch=production)](https://github.com/agustin-golmar/Flex-Bison-Compiler/actions/workflows/pipeline.yaml)
+[![✗](https://github.com/Ftrivelloni/MipASM/actions/workflows/pipeline.yaml/badge.svg?branch=production)](https://github.com/Ftrivelloni/MipASM/actions/workflows/pipeline.yaml)
 
 # Flex-Bison-Compiler
 
