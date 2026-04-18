@@ -2,6 +2,10 @@
 
 [![✗](https://github.com/Ftrivelloni/MipASM/actions/workflows/pipeline.yaml/badge.svg?branch=production)](https://github.com/Ftrivelloni/MipASM/actions/workflows/pipeline.yaml)
 
+<p align="center">
+	<img src="MipASM.png" alt="MipASM logo" />
+</p>
+
 # Flex-Bison-Compiler
 
 A base compiler example, developed with Flex and Bison.
