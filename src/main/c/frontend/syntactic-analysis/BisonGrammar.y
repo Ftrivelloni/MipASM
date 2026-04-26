@@ -96,7 +96,7 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 //program: expression											{ $$ = ExpressionProgramSemanticAction($1); }
 //	;
     ///   1		2		3					4			5			6			7						     Esto es por el orden VVVV		
-program: VOID MAIN OPEN_PARENTHESIS CLOSE_PARENTHESIS OPEN_BRACE expression CLOSE_BRACE		{ $$ = ExpressionProgramSemanticAction($6) }
+program: VOID MAIN OPEN_PARENTHESIS CLOSE_PARENTHESIS OPEN_BRACE expression CLOSE_BRACE		{ $$ = ExpressionProgramSemanticAction($6); }
 	;
 
 expression: expression[left] ADD expression[right]			{ $$ = ArithmeticExpressionSemanticAction($left, $right, ADDITION); }

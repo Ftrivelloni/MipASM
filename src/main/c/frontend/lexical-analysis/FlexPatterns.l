@@ -55,12 +55,12 @@ whitespace			[[:space:]]+
 
 %}
 
-//"{"									{ return EnterImportExpressionLexemeAction(IMPORT_EXPRESSION); }
-//<IMPORT_EXPRESSION>[^{}]+			    { return SubexpressionLexemeAction(); }
-//<IMPORT_EXPRESSION>"}"				{ return LeaveImportExpressionLexemeAction(); }
-//<IMPORT_EXPRESSION>.				{ return UnknownLexemeAction(); }
-"{"                                 { return BraceLexemeAction(OPEN_BRACE); }
-"}"                                 { return BraceLexemeAction(CLOSE_BRACE); }
+	/* "{"								{ return EnterImportExpressionLexemeAction(IMPORT_EXPRESSION); } */
+	/* <IMPORT_EXPRESSION>[^{}]+		{ return SubexpressionLexemeAction(); } */
+	/* <IMPORT_EXPRESSION>"}"			{ return LeaveImportExpressionLexemeAction(); } */
+	/* <IMPORT_EXPRESSION>.				{ return UnknownLexemeAction(); } */
+"{"									{ return BraceLexemeAction(OPEN_BRACE); }
+"}"									{ return BraceLexemeAction(CLOSE_BRACE); }
 
 
 "/*"								{ return EnterMultilineCommentLexemeAction(MULTILINE_COMMENT); }
@@ -75,6 +75,9 @@ whitespace			[[:space:]]+
 
 "("									{ return ParenthesisLexemeAction(OPEN_PARENTHESIS); }
 ")"									{ return ParenthesisLexemeAction(CLOSE_PARENTHESIS); }
+
+"void"								{ return BraceLexemeAction(VOID); }
+"main"								{ return BraceLexemeAction(MAIN); }
 
 [[:digit:]]+						{ return IntegerLexemeAction(); }
 
