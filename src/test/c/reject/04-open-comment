@@ -1,2 +1,4 @@
-0
-/* An open comment that never ends...
+void main() {
+	0
+	/* An open comment that never ends...
+}

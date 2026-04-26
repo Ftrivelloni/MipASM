@@ -1,4 +1,6 @@
 /*
 	A multiline comment.
 */
-0
+void main() {
+	0
+}
