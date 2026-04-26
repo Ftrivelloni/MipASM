@@ -15,16 +15,17 @@
  */
 
 extern CompilationStatus ArithmeticOperatorLexemeAction(TokenLabel label);
-extern CompilationStatus EnterImportExpressionLexemeAction(FlexContext context);
+//extern CompilationStatus EnterImportExpressionLexemeAction(FlexContext context);
 extern CompilationStatus EnterMultilineCommentLexemeAction(FlexContext context);
 extern CompilationStatus EOFLexemeAction();
 extern CompilationStatus IgnoredLexemeAction();
 extern CompilationStatus IntegerLexemeAction();
-extern CompilationStatus LeaveImportExpressionLexemeAction();
+//extern CompilationStatus LeaveImportExpressionLexemeAction();
 extern CompilationStatus LeaveMultilineCommentLexemeAction();
 extern CompilationStatus ParenthesisLexemeAction(TokenLabel label);
 extern CompilationStatus SubexpressionLexemeAction();
 extern CompilationStatus UnknownLexemeAction();
+extern CompilationStatus BraceLexemeAction(TokenLabel label);// nuevo para braces
 
 %}
 
@@ -54,10 +55,13 @@ whitespace			[[:space:]]+
 
 %}
 
-"{"									{ return EnterImportExpressionLexemeAction(IMPORT_EXPRESSION); }
-<IMPORT_EXPRESSION>[^{}]+			{ return SubexpressionLexemeAction(); }
-<IMPORT_EXPRESSION>"}"				{ return LeaveImportExpressionLexemeAction(); }
-<IMPORT_EXPRESSION>.				{ return UnknownLexemeAction(); }
+//"{"									{ return EnterImportExpressionLexemeAction(IMPORT_EXPRESSION); }
+//<IMPORT_EXPRESSION>[^{}]+			    { return SubexpressionLexemeAction(); }
+//<IMPORT_EXPRESSION>"}"				{ return LeaveImportExpressionLexemeAction(); }
+//<IMPORT_EXPRESSION>.				{ return UnknownLexemeAction(); }
+"{"                                 { return BraceLexemeAction(OPEN_BRACE); }
+"}"                                 { return BraceLexemeAction(CLOSE_BRACE); }
+
 
 "/*"								{ return EnterMultilineCommentLexemeAction(MULTILINE_COMMENT); }
 <MULTILINE_COMMENT>"*/"				{ return LeaveMultilineCommentLexemeAction(); }

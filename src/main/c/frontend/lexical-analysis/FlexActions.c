@@ -143,6 +143,15 @@ CompilationStatus ParenthesisLexemeAction(TokenLabel label) {
 	return status;
 }
 
+// this is for braces it should be similat to parenthesis ^^^^
+CompilationStatus BraceLexemeAction(TokenLabel label) {
+	Token * token = createToken(_lexicalAnalyzer, label);
+	_logTokenAction(__FUNCTION__, token);
+	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
+	destroyToken(token);
+	return status;
+}
+
 CompilationStatus SubexpressionLexemeAction() {
 	Token * token = createToken(_lexicalAnalyzer, IGNORED);
 	_inputBuffer = createInputBuffer(_lexicalAnalyzer, token->lexeme);
