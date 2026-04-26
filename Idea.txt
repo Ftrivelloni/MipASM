@@ -1,3 +1,5 @@
+// abajo hay instrucciones de docker para mi :)
+
 notas de clase (papa):
 -Mirar un poco los casos de uso y los programas de ejemplo
 -definimos la gramatica en BisonGrammar.y (como hizo en el ejemplo de la practica)
@@ -64,3 +66,29 @@ Order of files to change (creo) (gpt):
   - src/test/c/accept/* and src/test/c/reject/*
     Replace the arithmetic tests. Add valid and invalid examples for the new language. Tests
     are the fastest way to know if the grammar is doing what you think.
+
+Docker build/run notes:
+
+    sudo docker build -f src/main/docker/compiler/Dockerfile -t mipasm-compiler .
+
+    sudo docker run --rm -it -v "$PWD:/home/ubuntu/Flex-Bison-Compiler" -w /home/ubuntu/Flex-Bison-Compiler mipasm-compiler bash
+
+  Once inside the container:
+
+    chmod +x src/main/bash/*.sh
+    bash src/main/bash/build.sh
+    bash src/main/bash/test.sh
+
+  Run one program manually:
+
+    printf 'void main() { 1 + 2 }' | .build/Flex-Bison-Compiler
+
+  Expected quick checks:
+
+    printf 'void main() { 1 + 2 }' | .build/Flex-Bison-Compiler
+    echo $?
+    # should be 0
+
+    printf '1 + 2' | .build/Flex-Bison-Compiler
+    echo $?
+    # should be non-zero because programs now need void main() { ... }
