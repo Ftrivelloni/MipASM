@@ -16,6 +16,8 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 
 %}
 
+/// Bison declarations
+
 // You touch this, and you die.
 %define api.pure full
 %define api.push-pull push
@@ -45,22 +47,28 @@ void yyerror(const YYLTYPE * location, const char * message) {}
  *
  * @see https://www.gnu.org/software/bison/manual/html_node/Destructor-Decl.html
  */
-%destructor { destroyConstant($$); } <constant>
-%destructor { destroyExpression($$); } <expression>
-%destructor { destroyFactor($$); } <factor>
+%destructor { destroyConstant($$); } <constant>       // estos son loa de %union
+%destructor { destroyExpression($$); } <expression>  //
+%destructor { destroyFactor($$); } <factor>         //
+// no hay destructor de program
 
 /** Terminals. */
+// estos son lo que lee, onda como el codigo se levanta y pasa
 %token <integer> INTEGER
 %token <token> ADD
-%token <token> CLOSE_BRACE
-%token <token> CLOSE_COMMENT
-%token <token> CLOSE_PARENTHESIS
+%token <token> SUB
 %token <token> DIV
 %token <token> MUL
-%token <token> OPEN_BRACE
+%token <token> OPEN_BRACE // los braces en el coso este son para imports
 %token <token> OPEN_COMMENT
 %token <token> OPEN_PARENTHESIS
-%token <token> SUB
+%token <token> CLOSE_BRACE // los braces son para imports ojo
+%token <token> CLOSE_COMMENT
+%token <token> CLOSE_PARENTHESIS
+
+// falta agregarlas al lexer
+%token <token> VOID
+%token <token> MAIN
 
 %token <token> IGNORED
 %token <token> UNKNOWN
@@ -77,14 +85,18 @@ void yyerror(const YYLTYPE * location, const char * message) {}
  * @see https://en.cppreference.com/w/cpp/language/operator_precedence.html
  * @see https://www.gnu.org/software/bison/manual/html_node/Precedence.html
  */
+ //this marks presedence, * and / have higher precedence because they are declared later
 %left ADD SUB
 %left MUL DIV
 
-%%
+%% /// grammar rules
 
 // IMPORTANT: To use λ in the following grammar, use the %empty symbol.
 
-program: expression											{ $$ = ExpressionProgramSemanticAction($1); }
+//program: expression											{ $$ = ExpressionProgramSemanticAction($1); }
+//	;
+    ///   1		2		3					4			5			6			7						     Esto es por el orden VVVV		
+program: VOID MAIN OPEN_PARENTHESIS CLOSE_PARENTHESIS OPEN_BRACE expression CLOSE_BRACE		{ $$ = ExpressionProgramSemanticAction($6) }
 	;
 
 expression: expression[left] ADD expression[right]			{ $$ = ArithmeticExpressionSemanticAction($left, $right, ADDITION); }

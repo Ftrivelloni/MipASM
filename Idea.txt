@@ -1,0 +1,66 @@
+notas de clase (papa):
+-Mirar un poco los casos de uso y los programas de ejemplo
+-definimos la gramatica en BisonGrammar.y (como hizo en el ejemplo de la practica)
+-ir de lo mas primitivo a lo mas generico
+-No usar las cosas de FlexExport, esta para que compile nomas
+
+Order of files to change (creo) (gpt):
+
+  - src/main/c/frontend/syntactic-analysis/BisonGrammar.y:26
+    Define the real grammar here: tokens, %union, %type, precedence, and productions. Current
+    grammar only supports INTEGER, +, -, *, /, parentheses, and one expression program. New
+    non-terminals need matching AST pointer types in %union and %type.
+
+  - src/main/c/frontend/lexical-analysis/FlexPatterns.l:57
+    Add lexer rules for the new language: keywords, identifiers, registers, labels, commas,
+    semicolons, assignment, strings, etc. Every token returned here must exist in
+    BisonGrammar.y.
+
+  - src/main/c/frontend/lexical-analysis/FlexActions.c:55 and src/main/c/frontend/lexical-
+    analysis/FlexActions.h:1
+    Add actions for tokens with values. Current code only fills integer values at src/main/c/
+    frontend/lexical-analysis/FlexActions.c:108. If you add identifiers/strings, you need to
+    store text in token->semanticValue.
+
+  - src/main/c/frontend/syntactic-analysis/AbstractSyntaxTree.h:29
+    Redesign the AST. Current AST is hardcoded for arithmetic: Program -> Expression -> Factor
+    -> Constant. For a real language, you probably need nodes like Statement, Instruction,
+    Operand, Declaration, Label, or similar.
+
+  - src/main/c/frontend/syntactic-analysis/AbstractSyntaxTree.c:23
+    Update destructors for every new AST node. If you add lists, strings, nested statements,
+    etc., they must be freed here.
+
+  - src/main/c/frontend/syntactic-analysis/BisonActions.h:19 and src/main/c/frontend/syntactic-
+    analysis/BisonActions.c:39
+    Replace the arithmetic constructors with constructors for your new grammar nodes. Bison
+    productions should call these actions to build the AST.
+
+  - src/main/c/backend/domain-specific/Calculator.c:32 and src/main/c/backend/domain-specific/
+    Calculator.h:1
+    This is not generic. It evaluates arithmetic expressions. If your new language is not a
+    calculator, replace this with semantic analysis, symbol-table validation, assembler logic,
+    or remove it.
+
+  - src/main/c/backend/code-generation/Generator.c:39 and src/main/c/backend/code-generation/
+    Generator.h:1
+    Current generator prints a LaTeX tree plus computed result. If the assignment expects
+    assembly/output/code, this file needs to generate that from the new AST.
+
+  - src/main/c/EntryPoint.c:26
+    Current flow is parse, calculate, generate. You will need to change the backend flow after
+    parsing. Example: parse -> semantic analysis -> code generation. Also update the root AST
+    type and destructor call.
+
+  - src/main/c/support/type/CompilerState.h:8
+    Current state has abstractSyntaxtTree and calculator-only value. If you need a symbol
+    table, labels, output buffer, error state, or scopes, add them here. The value field should
+    probably go away unless the new language still computes one integer.
+
+  - CMakeLists.txt:35
+    Only change this if you add new .c files. If you create SemanticAnalyzer.c, SymbolTable.c,
+    etc., they must be listed in add_executable.
+
+  - src/test/c/accept/* and src/test/c/reject/*
+    Replace the arithmetic tests. Add valid and invalid examples for the new language. Tests
+    are the fastest way to know if the grammar is doing what you think.
