@@ -12,7 +12,9 @@
 #include "../../support/type/TokenLabel.h"
 #include "../Frontend.h"
 
-/** Initialize module's internal state. */
+#include <string.h>
+#include <stdlib.h>
+
 ModuleDestructor initializeFlexActionsModule();
 
 #endif

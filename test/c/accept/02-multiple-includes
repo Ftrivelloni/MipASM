@@ -1,0 +1,6 @@
+#include "<stdlib/audio>"
+#include "<stdlib/scales>"
+#include "<my/custom_lib>"
+
+void main() {
+}

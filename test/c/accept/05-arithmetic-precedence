@@ -1,0 +1,6 @@
+void main() {
+    int a = 1 + 2 * 3 - 4 / 2;
+    int b = (1 + 2) * 3;
+    int c = a + b * a / 2;
+    float d = 0.5 + 1.25 * 2.0;
+}

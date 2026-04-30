@@ -1,0 +1,34 @@
+// Comprehensive test exercising every grammar production.
+#include "<stdlib/audio>"
+#include "<stdlib/scales>"
+
+const int CHANNEL = 0;
+const float STEP = 0.25;
+int counter = 0;
+boolean playing = 1;
+
+track lead = init_track(CHANNEL);
+track bass = init_track(1);
+
+void main() {
+    set_volume(lead, 100);
+    set_pan(lead, 64);
+    set_attack(bass, 0.02);
+
+    for (int i = 0; i < 8; i = i + 1) {
+        play(lead, 60 + i, STEP);
+        if (i == 4) {
+            sync {
+                play(bass, 36, 1.0);
+                play(lead, 67, 1.0);
+            }
+        } else {
+            rest(lead, STEP / 2);
+        }
+    }
+
+    while (counter < 4 && playing) {
+        play(bass, 40 + counter * 2, 0.5);
+        counter = counter + 1;
+    }
+}

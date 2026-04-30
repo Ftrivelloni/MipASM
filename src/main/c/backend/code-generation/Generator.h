@@ -9,11 +9,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-/** Initialize module's internal state. */
 ModuleDestructor initializeGeneratorModule();
 
 /**
- * Generates the final output using the current compiler state.
+ * Pretty-prints the AST stored in the compiler state to standard output.
+ * The frontend produces an AST; this dump is the proof that the tree was
+ * built end-to-end.
  */
 void executeGenerator(CompilerState * compilerState);
 

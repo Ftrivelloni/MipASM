@@ -1,0 +1,10 @@
+track t = init_track(0);
+
+void main() {
+    sync {
+        play(t, 60, 1.0);
+        play(t, 64, 1.0);
+        play(t, 67, 1.0);
+    }
+    rest(t, 0.5);
+}

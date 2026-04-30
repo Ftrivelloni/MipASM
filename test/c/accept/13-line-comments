@@ -1,0 +1,11 @@
+// File header comment
+#include "<stdlib/audio>" // include MIDI lib
+
+// Global declaration
+const int X = 1; // value of X
+
+void main() {
+    // statement comment
+    int y = X + 1; // y is X + 1
+    // trailing comment
+}

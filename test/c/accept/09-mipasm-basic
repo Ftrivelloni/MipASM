@@ -1,0 +1,8 @@
+#include "<stdlib/audio>"
+
+track myTrack = init_track(1);
+
+void main() {
+    play(myTrack, 60, 1.5);
+    rest(myTrack, 0.5);
+}

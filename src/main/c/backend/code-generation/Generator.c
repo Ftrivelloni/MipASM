@@ -1,12 +1,7 @@
 #include "Generator.h"
 
-/* MODULE INTERNAL STATE */
-
-const char _indentationCharacter = ' ';
-const char _indentationSize = 4;
 static Logger * _logger = NULL;
 
-/** Shutdown module's internal state. */
 void _shutdownGeneratorModule() {
 	if (_logger != NULL) {
 		logDebugging(_logger, "Destroying module: Generator...");
@@ -20,159 +15,181 @@ ModuleDestructor initializeGeneratorModule() {
 	return _shutdownGeneratorModule;
 }
 
-/** PRIVATE FUNCTIONS */
-
-static char * _indentation(const unsigned int indentationLevel);
-static const char _expressionTypeToCharacter(const ExpressionType type);
-static void _generateConstant(const unsigned int indentationLevel, Constant * constant);
-static void _generateEpilogue(const int value);
-static void _generateExpression(const unsigned int indentationLevel, Expression * expression);
-static void _generateFactor(const unsigned int indentationLevel, Factor * factor);
-static void _generateProgram(Program * program);
-static void _generatePrologue(void);
-static void _output(const unsigned int indentationLevel, const char * const format, ...);
-
-/**
- * Converts and expression type to the proper character of the operation
- * involved, or returns '\0' if that's not possible.
- */
-static const char _expressionTypeToCharacter(const ExpressionType type) {
-	switch (type) {
-		case ADDITION: return '+';
-		case DIVISION: return '/';
-		case MULTIPLICATION: return '*';
-		case SUBTRACTION: return '-';
-		default:
-			logError(_logger, "The specified expression type cannot be converted into character: %d", type);
-			return '\0';
+static void _printIndent(unsigned int level) {
+	for (unsigned int i = 0; i < level; ++i) {
+		fputs("  ", stdout);
 	}
 }
 
-/**
- * Generates the output of a constant.
- */
-static void _generateConstant(const unsigned int indentationLevel, Constant * constant) {
-	_output(indentationLevel, "%s", "[ $C$, circle, draw, black!20\n");
-	_output(1 + indentationLevel, "%s%d%s", "[ $", constant->value, "$, circle, draw ]\n");
-	_output(indentationLevel, "%s", "]\n");
+static void _printNode(ASTNode * node, unsigned int level);
+
+static void _printList(const char * label, ASTList * list, unsigned int level) {
+	_printIndent(level);
+	if (list == NULL) {
+		printf("%s: []\n", label);
+		return;
+	}
+	printf("%s:\n", label);
+	for (ASTList * cell = list; cell != NULL; cell = cell->next) {
+		_printNode(cell->node, level + 1);
+	}
 }
 
-/**
- * Creates the epilogue of the generated output, that is, the final lines that
- * completes a valid Latex document.
- */
-static void _generateEpilogue(const int value) {
-	_output(0, "%s%d%s",
-		"            [ $", value, "$, circle, draw, blue ]\n"
-		"        ]\n"
-		"    \\end{forest}\n"
-		"\\end{document}\n\n"
-	);
-}
-
-/**
- * Generates the output of an expression.
- */
-static void _generateExpression(const unsigned int indentationLevel, Expression * expression) {
-	_output(indentationLevel, "%s", "[ $E$, circle, draw, black!20\n");
-	switch (expression->type) {
-		case ADDITION:
-		case DIVISION:
-		case MULTIPLICATION:
-		case SUBTRACTION:
-			_generateExpression(1 + indentationLevel, expression->leftExpression);
-			_output(1 + indentationLevel, "%s%c%s", "[ $", _expressionTypeToCharacter(expression->type), "$, circle, draw, purple ]\n");
-			_generateExpression(1 + indentationLevel, expression->rightExpression);
+static void _printNode(ASTNode * node, unsigned int level) {
+	if (node == NULL) {
+		_printIndent(level);
+		printf("(null)\n");
+		return;
+	}
+	_printIndent(level);
+	printf("%s", nodeTypeName(node->nodeType));
+	switch (node->nodeType) {
+		case AST_PROGRAM:
+			printf("\n");
+			_printList("includes", node->data.program.includes, level + 1);
+			_printList("globalDecls", node->data.program.globalDecls, level + 1);
+			_printIndent(level + 1);
+			printf("mainFunc:\n");
+			_printNode(node->data.program.mainFunc, level + 2);
 			break;
-		case FACTOR:
-			_generateFactor(1 + indentationLevel, expression->factor);
+		case AST_INCLUDE:
+			printf(" \"%s\"\n", node->data.include.path ? node->data.include.path : "");
+			break;
+		case AST_MAIN_FUNC:
+			printf("\n");
+			_printNode(node->data.mainFunc.body, level + 1);
+			break;
+		case AST_BLOCK:
+			printf("\n");
+			_printList("statements", node->data.block.statements, level + 1);
+			break;
+		case AST_DECLARATION:
+			printf(" %s%s %s\n",
+				node->data.declaration.isConst ? "const " : "",
+				typeKindName(node->data.declaration.typeKind),
+				node->data.declaration.name ? node->data.declaration.name : "?");
+			if (node->data.declaration.initializer != NULL) {
+				_printIndent(level + 1);
+				printf("init:\n");
+				_printNode(node->data.declaration.initializer, level + 2);
+			}
+			break;
+		case AST_TRACK_INIT:
+			printf(" %s\n", node->data.trackInit.name ? node->data.trackInit.name : "?");
+			_printIndent(level + 1);
+			printf("channel:\n");
+			_printNode(node->data.trackInit.channel, level + 2);
+			break;
+		case AST_ASSIGNMENT:
+			printf(" %s\n", node->data.assignment.name ? node->data.assignment.name : "?");
+			_printIndent(level + 1);
+			printf("value:\n");
+			_printNode(node->data.assignment.value, level + 2);
+			break;
+		case AST_PLAY:
+			printf(" %s\n", node->data.play.trackName ? node->data.play.trackName : "?");
+			_printIndent(level + 1);
+			printf("note:\n");
+			_printNode(node->data.play.note, level + 2);
+			_printIndent(level + 1);
+			printf("duration:\n");
+			_printNode(node->data.play.duration, level + 2);
+			break;
+		case AST_REST:
+			printf(" %s\n", node->data.rest.trackName ? node->data.rest.trackName : "?");
+			_printIndent(level + 1);
+			printf("duration:\n");
+			_printNode(node->data.rest.duration, level + 2);
+			break;
+		case AST_SYNC_BLOCK:
+			printf("\n");
+			_printNode(node->data.syncBlock.block, level + 1);
+			break;
+		case AST_CC_STMT:
+			printf(" %s(%s)\n",
+				ccKindName(node->data.ccStmt.kind),
+				node->data.ccStmt.trackName ? node->data.ccStmt.trackName : "?");
+			_printIndent(level + 1);
+			printf("value:\n");
+			_printNode(node->data.ccStmt.value, level + 2);
+			break;
+		case AST_IF:
+			printf("\n");
+			_printIndent(level + 1);
+			printf("condition:\n");
+			_printNode(node->data.ifStmt.condition, level + 2);
+			_printIndent(level + 1);
+			printf("then:\n");
+			_printNode(node->data.ifStmt.thenBlock, level + 2);
+			if (node->data.ifStmt.elseBlock != NULL) {
+				_printIndent(level + 1);
+				printf("else:\n");
+				_printNode(node->data.ifStmt.elseBlock, level + 2);
+			}
+			break;
+		case AST_FOR:
+			printf(" %s%s %s\n",
+				node->data.forStmt.hasType ? typeKindName(node->data.forStmt.initTypeKind) : "",
+				node->data.forStmt.hasType ? " " : "",
+				node->data.forStmt.initName ? node->data.forStmt.initName : "?");
+			_printIndent(level + 1);
+			printf("init:\n");
+			_printNode(node->data.forStmt.initValue, level + 2);
+			_printIndent(level + 1);
+			printf("condition:\n");
+			_printNode(node->data.forStmt.condition, level + 2);
+			_printIndent(level + 1);
+			printf("step:\n");
+			_printNode(node->data.forStmt.step, level + 2);
+			_printIndent(level + 1);
+			printf("body:\n");
+			_printNode(node->data.forStmt.body, level + 2);
+			break;
+		case AST_WHILE:
+			printf("\n");
+			_printIndent(level + 1);
+			printf("condition:\n");
+			_printNode(node->data.whileStmt.condition, level + 2);
+			_printIndent(level + 1);
+			printf("body:\n");
+			_printNode(node->data.whileStmt.body, level + 2);
+			break;
+		case AST_BINARY_OP:
+			printf(" %s\n", operatorKindName(node->data.binary.op));
+			_printNode(node->data.binary.left, level + 1);
+			_printNode(node->data.binary.right, level + 1);
+			break;
+		case AST_UNARY_OP:
+			printf(" %s\n", operatorKindName(node->data.unary.op));
+			_printNode(node->data.unary.operand, level + 1);
+			break;
+		case AST_INT_LIT:
+			printf(" %d\n", node->data.intLit.value);
+			break;
+		case AST_FLOAT_LIT:
+			printf(" %f\n", (double) node->data.floatLit.value);
+			break;
+		case AST_IDENTIFIER:
+			printf(" %s\n", node->data.identifier.name ? node->data.identifier.name : "?");
+			break;
+		case AST_PAREN_EXPR:
+			printf("\n");
+			_printNode(node->data.paren.inner, level + 1);
 			break;
 		default:
-			logError(_logger, "The specified expression type is unknown: %d", expression->type);
+			printf(" (unknown)\n");
 			break;
 	}
-	_output(indentationLevel, "%s", "]\n");
 }
-
-/**
- * Generates the output of a factor.
- */
-static void _generateFactor(const unsigned int indentationLevel, Factor * factor) {
-	_output(indentationLevel, "%s", "[ $F$, circle, draw, black!20\n");
-	switch (factor->type) {
-		case CONSTANT:
-			_generateConstant(1 + indentationLevel, factor->constant);
-			break;
-		case EXPRESSION:
-			_output(1 + indentationLevel, "%s", "[ $($, circle, draw, purple ]\n");
-			_generateExpression(1 + indentationLevel, factor->expression);
-			_output(1 + indentationLevel, "%s", "[ $)$, circle, draw, purple ]\n");
-			break;
-		default:
-			logError(_logger, "The specified factor type is unknown: %d", factor->type);
-			break;
-	}
-	_output(indentationLevel, "%s", "]\n");
-}
-
-/**
- * Generates the output of the program.
- */
-static void _generateProgram(Program * program) {
-	_generateExpression(3, program->expression);
-}
-
-/**
- * Creates the prologue of the generated output, a Latex document that renders
- * a tree thanks to the Forest package.
- *
- * @see https://ctan.dcc.uchile.cl/graphics/pgf/contrib/forest/forest-doc.pdf
- */
-static void _generatePrologue(void) {
-	_output(0, "%s",
-		"\\documentclass{standalone}\n\n"
-		"\\usepackage[utf8]{inputenc}\n"
-		"\\usepackage[T1]{fontenc}\n"
-		"\\usepackage{amsmath}\n"
-		"\\usepackage{forest}\n"
-		"\\usepackage{microtype}\n\n"
-		"\\begin{document}\n"
-		"    \\centering\n"
-		"    \\begin{forest}\n"
-		"        [ \\text{$=$}, circle, draw, purple\n"
-	);
-}
-
-/**
- * Generates an indentation string for the specified level.
- */
-static char * _indentation(const unsigned int level) {
-	return indentation(_indentationCharacter, level, _indentationSize);
-}
-
-/**
- * Outputs a formatted string to standard output. The "fflush" instruction
- * allows to see the output even close to a failure, because it drops the
- * buffering.
- */
-static void _output(const unsigned int indentationLevel, const char * const format, ...) {
-	va_list arguments;
-	va_start(arguments, format);
-	char * indentation = _indentation(indentationLevel);
-	char * effectiveFormat = concatenate(2, indentation, format);
-	vfprintf(stdout, effectiveFormat, arguments);
-	fflush(stdout);
-	free(effectiveFormat);
-	free(indentation);
-	va_end(arguments);
-}
-
-/** PUBLIC FUNCTIONS */
 
 void executeGenerator(CompilerState * compilerState) {
-	logDebugging(_logger, "Generating final output...");
-	_generatePrologue();
-	_generateProgram(compilerState->abstractSyntaxtTree);
-	_generateEpilogue(compilerState->value);
+	logDebugging(_logger, "Generating AST dump...");
+	ASTNode * tree = (ASTNode *) compilerState->abstractSyntaxtTree;
+	if (tree == NULL) {
+		printf("(empty AST)\n");
+	} else {
+		_printNode(tree, 0);
+	}
+	fflush(stdout);
 	logDebugging(_logger, "Generation is done.");
 }
