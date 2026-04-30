@@ -92,3 +92,90 @@ Docker build/run notes:
     printf '1 + 2' | .build/Flex-Bison-Compiler
     echo $?
     # should be non-zero because programs now need void main() { ... }
+
+================================================================================
+How to run the project
+================================================================================
+
+The compiler is a single CLI binary that reads MipASM source from stdin and
+prints diagnostics + AST dump to stderr/stdout. Everything runs inside the
+mipasm-compiler Docker image (no host bison/flex required).
+
+  1. Build the image once (only when the Dockerfile changes):
+
+       docker build -f src/main/docker/compiler/Dockerfile -t mipasm-compiler .
+
+  2. Compile the project:
+
+       docker run --rm -v "$PWD:/work" -w /work mipasm-compiler \
+           src/main/bash/build.sh
+
+     The artifact lands at .build/Flex-Bison-Compiler.
+
+  3. Run the full test suite (accept + reject):
+
+       docker run --rm -v "$PWD:/work" -w /work mipasm-compiler \
+           src/main/bash/test.sh
+
+     The script iterates over test/c/accept/ and test/c/reject/. An accept
+     test passes when the compiler exits 0; a reject test passes when it
+     exits non-zero.
+
+  4. Run a single source file:
+
+       docker run --rm -i -v "$PWD:/work" -w /work mipasm-compiler \
+           bash -c '.build/Flex-Bison-Compiler' < test/c/accept/15-full-program
+
+================================================================================
+How to read the logging
+================================================================================
+
+Every log line uses the format:
+
+    [LEVEL][LoggerName] message
+
+Both LEVEL and LoggerName are fixed strings; grep on either is reliable.
+
+  Levels (controlled by env var LOGGING_LEVEL, default INFORMATION):
+
+    ALL          0   Show everything.
+    DEBUGGING   10   Per-token push, per-action firing, parse-state traces.
+                     Use this when the parser rejects something and you need
+                     to know exactly which token broke the production.
+    INFORMATION 20   High-level milestones: build started, parse accepted,
+                     AST printed.
+    WARNING     30   Recoverable oddities (e.g. unknown lexeme that the
+                     lexer skipped).
+    ERROR       40   Parse error, semantic error, allocation failure.
+    CRITICAL    50   Unrecoverable; the process aborts shortly after.
+
+  Toggle LOG_IGNORED_LEXEMES=true to also log whitespace and comments that
+  the lexer normally drops. Useful only when debugging the lexer itself.
+
+  ENVIRONMENT=development enables ANSI colours; set to production to strip
+  them when piping output to a file.
+
+  Logger sources (the [LoggerName] tag) and what they emit:
+
+    [FlexActions]         One line per token the lexer pushes to the parser.
+                          Read this top-to-bottom to reconstruct the token
+                          stream the parser actually saw.
+    [LexicalAnalyzer]     Lexer lifecycle and ignored-lexeme reports.
+    [BisonActions]        One line per semantic action that fires while
+                          reducing a production. Lets you watch the AST
+                          being built bottom-up.
+    [Frontend]            Parser entry/exit, accept/reject verdict.
+    [EntryPoint]          Driver lifecycle: build started, compile result,
+                          generator dispatch, AST destruction.
+    [Generator]           Pretty-printed AST dump emitted on success.
+    [AbstractSyntaxTree]  Node creation/destruction traces (only at
+                          DEBUGGING level).
+
+  Typical debugging recipe when an accept test unexpectedly rejects:
+
+       LOGGING_LEVEL=DEBUGGING .build/Flex-Bison-Compiler < test/c/accept/<name> 2>&1 \
+           | grep -E '\[FlexActions\]|\[BisonActions\]|\[Frontend\]'
+
+  The last [FlexActions] line before the [Frontend] error is the token that
+  broke the parse; the most recent [BisonActions] line shows the last
+  production that succeeded.
