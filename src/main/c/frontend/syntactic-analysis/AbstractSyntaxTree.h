@@ -6,11 +6,21 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+/** Initialize module's internal state. */
 ModuleDestructor initializeAbstractSyntaxTreeModule();
 
+/**
+ * This type definition allows the AST to be self-referencing: blocks contain
+ * lists of AST nodes, expressions contain other expressions, and control-flow
+ * nodes contain nested blocks, such as talking about you in 3rd person, but
+ * without the madness.
+ */
 typedef struct ASTNode ASTNode;
 typedef struct ASTList ASTList;
 
+/**
+ * Node types for the Abstract Syntax Tree (AST).
+ */
 typedef enum {
 	AST_PROGRAM,
 	AST_INCLUDE,
@@ -177,6 +187,9 @@ extern ASTNode * root;
 ASTNode * newASTNode(NodeType type);
 ASTList * appendASTList(ASTList * list, ASTNode * node);
 
+/**
+ * Node recursive super-duper-trambolik-destructors.
+ */
 void destroyASTNode(ASTNode * node);
 void destroyASTList(ASTList * list);
 

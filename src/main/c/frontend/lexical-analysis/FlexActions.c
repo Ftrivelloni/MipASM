@@ -7,6 +7,7 @@ static InputBuffer * _inputBuffer = NULL;
 static LexicalAnalyzer * _lexicalAnalyzer = NULL;
 static Logger * _logger = NULL;
 
+/** Shutdown module's internal state. */
 void _shutdownFlexActionsModule() {
 	if (_logger != NULL) {
 		logDebugging(_logger, "Destroying module: FlexActions...");
@@ -30,6 +31,9 @@ ModuleDestructor initializeFlexActionsModule(LexicalAnalyzer * lexicalAnalyzer) 
 
 /* PRIVATE HELPERS */
 
+/**
+ * Logs a lexical-analyzer action over a token in DEBUGGING level.
+ */
 static void _logTokenAction(const char * actionName, Token * token) {
 	char * _lexeme = escape(token->lexeme);
 	logDebugging(_logger, WARNING_COLOR "%s" DEFAULT_COLOR ": Token(context=%d, label=%d, length=%d, lexeme=%s\"%s\"%s, line=%d, semanticValue=%p)",
@@ -74,6 +78,7 @@ CompilationStatus ParenthesisLexemeAction(TokenLabel label) {
 	return _pushSimpleToken(__FUNCTION__, label);
 }
 
+// This is for braces; yes, it should be similar to parenthesis ^^^^
 CompilationStatus BraceLexemeAction(TokenLabel label) {
 	return _pushSimpleToken(__FUNCTION__, label);
 }

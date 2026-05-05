@@ -1,9 +1,12 @@
 #include "AbstractSyntaxTree.h"
 
+/* MODULE INTERNAL STATE */
+
 ASTNode * root = NULL;
 
 static Logger * _logger = NULL;
 
+/** Shutdown module's internal state. */
 void _shutdownAbstractSyntaxTreeModule() {
 	if (_logger != NULL) {
 		logDebugging(_logger, "Destroying module: AbstractSyntaxTree...");
@@ -11,6 +14,8 @@ void _shutdownAbstractSyntaxTreeModule() {
 		_logger = NULL;
 	}
 }
+
+/* PUBLIC FUNCTIONS */
 
 ModuleDestructor initializeAbstractSyntaxTreeModule() {
 	_logger = createLogger("AbstractSyntaxTree");

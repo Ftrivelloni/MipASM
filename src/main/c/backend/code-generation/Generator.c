@@ -1,7 +1,10 @@
 #include "Generator.h"
 
+/* MODULE INTERNAL STATE */
+
 static Logger * _logger = NULL;
 
+/** Shutdown module's internal state. */
 void _shutdownGeneratorModule() {
 	if (_logger != NULL) {
 		logDebugging(_logger, "Destroying module: Generator...");
@@ -10,10 +13,14 @@ void _shutdownGeneratorModule() {
 	}
 }
 
+/* PUBLIC FUNCTIONS */
+
 ModuleDestructor initializeGeneratorModule() {
 	_logger = createLogger("Generator");
 	return _shutdownGeneratorModule;
 }
+
+/* PRIVATE FUNCTIONS */
 
 static void _printIndent(unsigned int level) {
 	for (unsigned int i = 0; i < level; ++i) {
@@ -23,6 +30,9 @@ static void _printIndent(unsigned int level) {
 
 static void _printNode(ASTNode * node, unsigned int level);
 
+/**
+ * Generates the output for a linked list of AST nodes.
+ */
 static void _printList(const char * label, ASTList * list, unsigned int level) {
 	_printIndent(level);
 	if (list == NULL) {
@@ -35,6 +45,9 @@ static void _printList(const char * label, ASTList * list, unsigned int level) {
 	}
 }
 
+/**
+ * Generates the output for one AST node and its children.
+ */
 static void _printNode(ASTNode * node, unsigned int level) {
 	if (node == NULL) {
 		_printIndent(level);

@@ -1,4 +1,4 @@
-// abajo hay instrucciones de docker para mi
+// abajo hay instrucciones de docker para mi :)
 
 notas de clase (papa):
 -Mirar un poco los casos de uso y los programas de ejemplo
