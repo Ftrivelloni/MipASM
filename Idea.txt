@@ -67,6 +67,26 @@ Order of files to change (creo) (gpt):
     Replace the arithmetic tests. Add valid and invalid examples for the new language. Tests
     are the fastest way to know if the grammar is doing what you think.
 
+// nuevo orden mas simple 
+  1. src/main/c/frontend/syntactic-analysis/BisonGrammar.y:111
+     What syntax is accepted.
+  2. src/main/c/frontend/syntactic-analysis/BisonActions.c:23
+     What AST nodes are created for each grammar rule.
+  3. src/main/c/frontend/syntactic-analysis/AbstractSyntaxTree.h:10
+     What shapes those AST nodes can have.
+  4. src/main/c/frontend/syntactic-analysis/AbstractSyntaxTree.c:1
+     How nodes are allocated, named, and destroyed.
+
+  After that, look at:
+
+  5. src/main/c/frontend/lexical-analysis/FlexPatterns.l:48
+     Which raw text becomes which token.
+  6. src/main/c/frontend/lexical-analysis/FlexActions.c:47
+     How token values like identifiers, integers, floats, and strings are
+     filled.
+
+
+
 Docker build/run notes:
 
     sudo docker build -f src/main/docker/compiler/Dockerfile -t mipasm-compiler .
