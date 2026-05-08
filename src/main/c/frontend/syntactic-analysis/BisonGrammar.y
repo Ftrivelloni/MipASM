@@ -9,6 +9,12 @@
 
 #include "BisonActions.h"
 
+/**
+ * The error reporting function for Bison parser.
+ *
+ * @see https://www.gnu.org/software/bison/manual/html_node/Error-Reporting-Function.html
+ * @see https://www.gnu.org/software/bison/manual/html_node/Tracking-Locations.html
+ */
 void yyerror(const YYLTYPE * location, const char * message) {
 	(void) location;
 	(void) message;
@@ -16,6 +22,9 @@ void yyerror(const YYLTYPE * location, const char * message) {
 
 %}
 
+/* Bison declarations. */
+
+// You touch this, and you die.
 %define api.pure full
 %define api.push-pull push
 %define api.value.union.name SemanticValue
@@ -23,11 +32,13 @@ void yyerror(const YYLTYPE * location, const char * message) {
 %locations
 
 %union {
+	/** Terminals. */
 	signed int integer;
 	float floatValue;
 	char * string;
 	TokenLabel token;
 
+	/** Non-terminals. */
 	ASTNode * node;
 	ASTList * list;
 	TypeKind typeKind;
@@ -92,7 +103,13 @@ void yyerror(const YYLTYPE * location, const char * message) {
  * ownership and produce double-frees / use-after-free.
  */
 
-/* Precedence and associativity (lowest to highest). */
+/**
+ * Precedence and associativity (lowest to highest).
+ * Multiplication and division bind tighter because they are declared later.
+ *
+ * @see https://en.cppreference.com/w/cpp/language/operator_precedence.html
+ * @see https://www.gnu.org/software/bison/manual/html_node/Precedence.html
+ */
 %right ASSIGN
 %left OR
 %left AND
@@ -107,6 +124,11 @@ void yyerror(const YYLTYPE * location, const char * message) {
 %start program
 
 %%
+
+/* Grammar rules. */
+
+// IMPORTANT: To use lambda in the following grammar, use the %empty symbol.
+// The numbers in semantic actions are Bison's rule positions. Count slowly, suffer less.
 
 program
 	: directives global_declarations main_func

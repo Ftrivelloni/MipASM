@@ -5,6 +5,7 @@
 static CompilerState * _compilerState = NULL;
 static Logger * _logger = NULL;
 
+/** Shutdown module's internal state. */
 void _shutdownBisonActionsModule() {
 	if (_logger != NULL) {
 		logDebugging(_logger, "Destroying module: BisonActions...");
@@ -20,6 +21,9 @@ ModuleDestructor initializeBisonActionsModule(CompilerState * compilerState) {
 	return _shutdownBisonActionsModule;
 }
 
+/**
+ * Logs a syntactic-analyzer action in DEBUGGING level.
+ */
 static void _log(const char * functionName) {
 	logDebugging(_logger, "%s", functionName);
 }

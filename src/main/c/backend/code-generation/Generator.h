@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+/** Initialize module's internal state. */
 ModuleDestructor initializeGeneratorModule();
 
 /**

@@ -8,6 +8,11 @@
 #include "support/type/CompilerState.h"
 #include "support/type/ModuleDestructor.h"
 
+/**
+ * The main entry-point of the entire application. If you use "strtok" to
+ * parse anything inside this project instead of using Flex and Bison, I will
+ * find you, and I will kill you (Bryan Mills; "Taken", 2008).
+ */
 const int main(const int length, const char ** arguments) {
 	LexicalAnalyzer * lexicalAnalyzer = createLexicalAnalyzer();
 	Logger * logger = createLogger("EntryPoint");
@@ -28,8 +33,12 @@ const int main(const int length, const char ** arguments) {
 	CompilationStatus compilationStatus = executeSyntacticAnalysis();
 	ASTNode * ast = (ASTNode *) compilerState.abstractSyntaxtTree;
 	if (compilationStatus == SUCCEEDED) {
+		// ----------------------------------------------------------------------------------------
+		// Beginning of the Backend... ------------------------------------------------------------
 		logDebugging(logger, "Frontend complete; dumping AST...");
 		executeGenerator(&compilerState);
+		// ...end of the Backend. -----------------------------------------------------------------
+		// ----------------------------------------------------------------------------------------
 	}
 	else {
 		logError(logger, "The syntactic-analysis phase rejects the input program.");

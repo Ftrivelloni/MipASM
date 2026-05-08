@@ -10,7 +10,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+/** Initialize module's internal state. */
 ModuleDestructor initializeBisonActionsModule(CompilerState * compilerState);
+
+/**
+ * Bison semantic actions.
+ */
 
 /* Top-level. */
 ASTNode * ProgramSemanticAction(ASTList * includes, ASTList * globalDecls, ASTNode * mainFunc);
