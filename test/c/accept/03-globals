@@ -1,0 +1,9 @@
+const int CHANNEL = 1;
+const float RATE = 0.5;
+int counter = 0;
+float pace;
+boolean ready = 1;
+duration step;
+
+void main() {
+}

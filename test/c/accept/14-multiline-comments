@@ -1,0 +1,11 @@
+/* file header */
+#include "<stdlib/audio>"
+
+/*
+ * Multi-line block comment
+ * with several lines and * stars *
+ */
+void main() {
+    int /* inline */ x = 1;
+    /* full-line */ x = x + 1;
+}

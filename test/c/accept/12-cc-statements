@@ -1,0 +1,7 @@
+track t = init_track(0);
+
+void main() {
+    set_volume(t, 100);
+    set_pan(t, 64);
+    set_attack(t, 0.05);
+}

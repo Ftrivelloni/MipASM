@@ -1,0 +1,5 @@
+track t = init_track(0);
+
+void main() {
+    play(t, 60 1.5);
+}

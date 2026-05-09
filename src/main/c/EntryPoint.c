@@ -1,7 +1,7 @@
 #include "backend/code-generation/Generator.h"
-#include "backend/domain-specific/Calculator.h"
 #include "frontend/Frontend.h"
 #include "frontend/lexical-analysis/FlexActions.h"
+#include "frontend/syntactic-analysis/AbstractSyntaxTree.h"
 #include "frontend/syntactic-analysis/BisonActions.h"
 #include "support/logging/Logger.h"
 #include "support/type/CompilationStatus.h"
@@ -28,24 +28,15 @@ const int main(const int length, const char ** arguments) {
 		initializeFlexActionsModule(lexicalAnalyzer),
 		initializeBisonActionsModule(&compilerState),
 		initializeFrontendModule(lexicalAnalyzer),
-		initializeCalculatorModule(),
 		initializeGeneratorModule()
 	};
 	CompilationStatus compilationStatus = executeSyntacticAnalysis();
-	Program * program = compilerState.abstractSyntaxtTree;
+	ASTNode * ast = (ASTNode *) compilerState.abstractSyntaxtTree;
 	if (compilationStatus == SUCCEEDED) {
 		// ----------------------------------------------------------------------------------------
 		// Beginning of the Backend... ------------------------------------------------------------
-		logDebugging(logger, "Computing expression value...");
-		ComputationResult computationResult = executeCalculator(&compilerState);
-		if (computationResult.succeeded) {
-			compilerState.value = computationResult.value;
-			executeGenerator(&compilerState);
-		}
-		else {
-			logError(logger, "The computation phase rejects the input program.");
-			compilationStatus = FAILED;
-		}
+		logDebugging(logger, "Frontend complete; dumping AST...");
+		executeGenerator(&compilerState);
 		// ...end of the Backend. -----------------------------------------------------------------
 		// ----------------------------------------------------------------------------------------
 	}
@@ -54,7 +45,7 @@ const int main(const int length, const char ** arguments) {
 		compilationStatus = FAILED;
 	}
 	logDebugging(logger, "Releasing AST resources...");
-	destroyProgram(program);
+	destroyASTNode(ast);
 	for (int k = (sizeof(moduleDestructors)/sizeof(ModuleDestructor)) - 1; 0 <= k; --k) {
 		moduleDestructors[k]();
 	}

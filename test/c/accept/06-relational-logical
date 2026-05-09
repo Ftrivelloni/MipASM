@@ -1,0 +1,7 @@
+void main() {
+    boolean a = 1 < 2 && 3 >= 2;
+    boolean b = (1 == 1) || (2 != 3);
+    boolean c = 5 > 1 && 5 <= 10;
+    boolean d = !0;
+    boolean e = !(1 == 2);
+}

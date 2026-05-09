@@ -1,0 +1,6 @@
+track lead = init_track(0);
+track bass = init_track(1);
+
+void main() {
+    track drums = init_track(9);
+}
