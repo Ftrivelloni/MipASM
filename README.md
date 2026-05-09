@@ -62,7 +62,7 @@ where `<program>` is the path to the file that represents its entry-point.
 
 ### Test
 
-Executes every available unit-test under `src/test/c` folder:
+Executes every available unit-test under `test/c` folder:
 
 ```bash
 src/main/bash/test.sh
