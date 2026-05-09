@@ -8,16 +8,22 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: "Build Docker image."
+      - name: "Install."
         run: |
+          sudo apt-get update --yes
+          sudo apt-get install --yes \
+            bison \
+            cmake \
+            flex \
+            gcc \
+            make
           chmod u+x --recursive src/main/bash
-          docker build -t mipasm-compiler -f src/main/docker/compiler/Dockerfile .
       - name: "Build."
         run: |
-          docker run --rm -v "$PWD:/project" -w /project mipasm-compiler src/main/bash/build.sh
+          src/main/bash/build.sh
       - name: "Test."
         run: |
-          docker run --rm -v "$PWD:/project" -w /project mipasm-compiler src/main/bash/test.sh
+          src/main/bash/test.sh
 
 name: "CI"
 
