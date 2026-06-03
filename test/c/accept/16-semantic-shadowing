@@ -1,0 +1,8 @@
+int x = 1;
+
+void main() {
+    int x = 2;
+    if (1) {
+        float x = 3.0;
+    }
+}

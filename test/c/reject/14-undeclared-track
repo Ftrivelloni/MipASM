@@ -1,0 +1,3 @@
+void main() {
+    play(lead, 60, 1.0);
+}

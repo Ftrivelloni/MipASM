@@ -1,0 +1,5 @@
+const int CHANNEL = 0;
+
+void main() {
+    CHANNEL = 1;
+}

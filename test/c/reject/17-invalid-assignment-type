@@ -1,0 +1,5 @@
+track lead = init_track(0);
+
+void main() {
+    int x = lead;
+}
