@@ -1,0 +1,10 @@
+track lead = init_track(0);
+
+void main() {
+    int enabled = 1;
+    if (enabled) {
+        play(lead, 60, 1.0);
+    } else {
+        play(lead, 72, 1.0);
+    }
+}

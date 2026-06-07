@@ -32,28 +32,33 @@ const int main(const int length, const char ** arguments) {
 		initializeSemanticAnalyzerModule(),
 		initializeGeneratorModule()
 	};
+	
 	CompilationStatus compilationStatus = executeSyntacticAnalysis();
 	ASTNode * ast = (ASTNode *) compilerState.abstractSyntaxtTree;
-	if (compilationStatus == SUCCEEDED) {
-		// ----------------------------------------------------------------------------------------
-		// Beginning of the Backend... ------------------------------------------------------------
-		logDebugging(logger, "Frontend complete; analyzing semantics...");
-		compilationStatus = executeSemanticAnalysis(&compilerState);
-		if (compilationStatus == SUCCEEDED) {
-			logDebugging(logger, "Semantic analysis complete; dumping AST...");
-			executeGenerator(&compilerState);
-		}
-		else {
-			logError(logger, "The semantic-analysis phase rejects the input program.");
-			compilationStatus = FAILED;
-		}
-		// ...end of the Backend. -----------------------------------------------------------------
-		// ----------------------------------------------------------------------------------------
-	}
-	else {
+	if (compilationStatus != SUCCEEDED) {
 		logError(logger, "The syntactic-analysis phase rejects the input program.");
 		compilationStatus = FAILED;
 	}
+	else { // Beginning of the Backend... 
+		logDebugging(logger, "Frontend complete; analyzing semantics...");
+		compilationStatus = executeSemanticAnalysis(&compilerState);
+		
+		if (compilationStatus != SUCCEEDED) {
+			logError(logger, "The semantic-analysis phase rejects the input program.");
+			compilationStatus = FAILED;
+		}
+		else {
+			logDebugging(logger, "Semantic analysis complete; generating output...");
+			compilationStatus = executeGenerator(&compilerState);
+			
+			if (compilationStatus != SUCCEEDED) {
+				logError(logger, "The code-generation phase rejects the input program.");
+				// executeGenerator already returns FAILED
+			}
+		}
+		// ...end of the Backend
+	}
+
 	logDebugging(logger, "Releasing AST resources...");
 	destroyASTNode(ast);
 	for (int k = (sizeof(moduleDestructors)/sizeof(ModuleDestructor)) - 1; 0 <= k; --k) {

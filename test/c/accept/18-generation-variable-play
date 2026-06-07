@@ -1,0 +1,7 @@
+track lead = init_track(0);
+
+void main() {
+    int note = 60;
+    duration beat = 1.0;
+    play(lead, note, beat);
+}
