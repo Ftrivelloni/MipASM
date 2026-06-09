@@ -1,0 +1,67 @@
+#include "<stdlib/audio>"
+
+const int tempo = 150;
+int velocity = 100;
+
+track lead = init_track(0);
+track bass = init_track(1);
+
+void main() {
+    set_volume(lead, 110);
+    set_volume(bass, 90);
+    set_pan(lead, 54);
+    set_pan(bass, 74);
+
+    // Measure 1
+    sync { play(lead, 76, 1.0); play(bass, 57, 1.0); } // E5 | A3
+    sync { play(lead, 71, 0.5); play(bass, 57, 0.5); } // B4 | A3
+    sync { play(lead, 72, 0.5); play(bass, 57, 0.5); } // C5 | A3
+    sync { play(lead, 74, 1.0); play(bass, 53, 1.0); } // D5 | F3
+    sync { play(lead, 72, 0.5); play(bass, 53, 0.5); } // C5 | F3
+    sync { play(lead, 71, 0.5); play(bass, 53, 0.5); } // B4 | F3
+
+    // Measure 2
+    sync { play(lead, 69, 1.0); play(bass, 57, 1.0); } // A4 | A3
+    sync { play(lead, 69, 0.5); play(bass, 57, 0.5); } // A4 | A3
+    sync { play(lead, 72, 0.5); play(bass, 57, 0.5); } // C5 | A3
+    sync { play(lead, 76, 1.0); play(bass, 64, 1.0); } // E5 | E4
+    sync { play(lead, 74, 0.5); play(bass, 64, 0.5); } // D5 | E4
+    sync { play(lead, 72, 0.5); play(bass, 64, 0.5); } // C5 | E4
+
+    // Measure 3
+    sync { play(lead, 71, 1.5); play(bass, 55, 1.5); } // B4 | G3
+    sync { play(lead, 72, 0.5); play(bass, 55, 0.5); } // C5 | G3
+    sync { play(lead, 74, 1.0); play(bass, 55, 1.0); } // D5 | G3
+    sync { play(lead, 76, 1.0); play(bass, 59, 1.0); } // E5 | B3
+
+    // Measure 4
+    sync { play(lead, 72, 1.0); play(bass, 57, 1.0); } // C5 | A3
+    sync { play(lead, 69, 1.0); play(bass, 57, 1.0); } // A4 | A3
+    sync { play(lead, 69, 2.0); play(bass, 57, 2.0); } // A4 | A3
+
+    // Measure 5
+    sync { play(lead, 74, 1.5); play(bass, 50, 1.5); } // D5 | D3
+    sync { play(lead, 77, 0.5); play(bass, 50, 0.5); } // F5 | D3
+    sync { play(lead, 81, 1.0); play(bass, 50, 1.0); } // A5 | D3
+    sync { play(lead, 79, 0.5); play(bass, 50, 0.5); } // G5 | D3
+    sync { play(lead, 77, 0.5); play(bass, 50, 0.5); } // F5 | D3
+
+    // Measure 6
+    sync { play(lead, 76, 1.5); play(bass, 57, 1.5); } // E5 | A3
+    sync { play(lead, 72, 0.5); play(bass, 57, 0.5); } // C5 | A3
+    sync { play(lead, 76, 1.0); play(bass, 57, 1.0); } // E5 | A3
+    sync { play(lead, 74, 0.5); play(bass, 57, 0.5); } // D5 | A3
+    sync { play(lead, 72, 0.5); play(bass, 57, 0.5); } // C5 | A3
+
+    // Measure 7
+    sync { play(lead, 71, 1.0); play(bass, 55, 1.0); } // B4 | G3
+    sync { play(lead, 71, 0.5); play(bass, 55, 0.5); } // B4 | G3
+    sync { play(lead, 72, 0.5); play(bass, 55, 0.5); } // C5 | G3
+    sync { play(lead, 74, 1.0); play(bass, 55, 1.0); } // D5 | G3
+    sync { play(lead, 76, 1.0); play(bass, 59, 1.0); } // E5 | B3
+
+    // Measure 8
+    sync { play(lead, 72, 1.0); play(bass, 57, 1.0); } // C5 | A3
+    sync { play(lead, 69, 1.0); play(bass, 57, 1.0); } // A4 | A3
+    sync { play(lead, 69, 2.0); play(bass, 57, 2.0); } // A4 | A3
+}
