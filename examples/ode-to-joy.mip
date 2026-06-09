@@ -1,0 +1,87 @@
+// ode-to-joy.mip
+// A longer, recognizable demo for the MipASM compiler — long enough (~40s) to
+// confirm real playback in any media player.
+//
+// It exercises most of the language: reserved globals (tempo/velocity), three
+// tracks with stereo panning and volume, a rising intro run (for-loop), the
+// "Ode to Joy" theme played twice (while-loop) over a pulsing bass (sync), a
+// louder dynamic on the repeat (if/else), and a sustained 3-voice final chord.
+
+#include "<stdlib/audio>"
+
+const int tempo = 100;     // 100 BPM  -> 1 beat = 0.6s
+int velocity = 96;         // note-on velocity, raised on the repeat below
+
+track lead = init_track(0);
+track bass = init_track(1);
+track harmony = init_track(2);
+
+void main() {
+    // Mix: melody to the right, bass to the left, harmony centred.
+    set_volume(lead, 112);
+    set_pan(lead, 84);
+    set_volume(bass, 100);
+    set_pan(bass, 44);
+    set_volume(harmony, 88);
+    set_pan(harmony, 64);
+    set_attack(harmony, 20);
+
+    // Intro: a rising run so notes are heard immediately (for-loop).
+    for (int i = 0; i < 12; i = i + 1) {
+        play(lead, 55 + i, 0.20);
+    }
+    rest(lead, 1.0);
+
+    // Main theme, played twice; second pass is louder (if/else + while).
+    int rep = 0;
+    while (rep < 2) {
+        if (rep == 0) {
+            velocity = 96;
+        } else {
+            velocity = 118;
+        }
+
+        // Phrase A:  E E F G  G F E D  C C D E  E. D D
+        sync { play(lead, 64, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 64, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 65, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 67, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 67, 1.0); play(bass, 43, 1.0); }
+        sync { play(lead, 65, 1.0); play(bass, 43, 1.0); }
+        sync { play(lead, 64, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 62, 1.0); play(bass, 43, 1.0); }
+        sync { play(lead, 60, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 60, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 62, 1.0); play(bass, 43, 1.0); }
+        sync { play(lead, 64, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 64, 1.5); play(bass, 48, 1.5); }
+        sync { play(lead, 62, 0.5); play(bass, 43, 0.5); }
+        sync { play(lead, 62, 2.0); play(bass, 43, 2.0); }
+
+        // Phrase B:  E E F G  G F E D  C C D E  D. C C
+        sync { play(lead, 64, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 64, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 65, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 67, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 67, 1.0); play(bass, 43, 1.0); }
+        sync { play(lead, 65, 1.0); play(bass, 43, 1.0); }
+        sync { play(lead, 64, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 62, 1.0); play(bass, 43, 1.0); }
+        sync { play(lead, 60, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 60, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 62, 1.0); play(bass, 43, 1.0); }
+        sync { play(lead, 64, 1.0); play(bass, 48, 1.0); }
+        sync { play(lead, 62, 1.5); play(bass, 43, 1.5); }
+        sync { play(lead, 60, 0.5); play(bass, 48, 0.5); }
+        sync { play(lead, 60, 2.0); play(bass, 36, 2.0); }
+
+        rep = rep + 1;
+    }
+
+    // Big finish: a sustained C-major chord across all three voices.
+    sync {
+        play(lead, 76, 4.0);      // E5
+        play(harmony, 67, 4.0);   // G4
+        play(bass, 48, 4.0);      // C3
+    }
+}

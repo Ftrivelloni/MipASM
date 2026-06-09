@@ -1,4 +1,5 @@
 #include "Generator.h"
+#include "MidiEmitter.h"
 #include <string.h>
 
 /* MODULE INTERNAL STATE */
@@ -80,16 +81,10 @@ typedef struct RuntimeScope {
 	struct RuntimeScope * parent;
 } RuntimeScope;
 
-typedef struct EventLine {
-	char * text;
-	struct EventLine * next;
-} EventLine;
-
 typedef struct {
 	RuntimeScope * scope;
 	TrackValue * tracks;
-	EventLine * eventsHead;
-	EventLine * eventsTail;
+	MusicProgram * program;		/* structured events for the MIDI emitter */
 	double currentTime;
 	unsigned int errorCount;
 } InterpreterContext;
@@ -104,12 +99,12 @@ static RuntimeValue _evaluateExpression(InterpreterContext * context, ASTNode * 
 
 static void _reportGenerationError(InterpreterContext * context, const char * const format, ...) {
 	context->errorCount++;
+	char message[1024];
 	va_list arguments;
 	va_start(arguments, format);
-	fprintf(stderr, ERROR_COLOR "[ERROR][Generator] " DEFAULT_COLOR);
-	vfprintf(stderr, format, arguments);
-	fprintf(stderr, "\n");
+	vsnprintf(message, sizeof(message), format, arguments);
 	va_end(arguments);
+	logError(_logger, "%s", message);
 }
 
 static RuntimeValue _uninitializedValue(TypeKind type) {
@@ -268,37 +263,13 @@ static TrackValue * _findTrack(InterpreterContext * context, const char * name) 
 	return symbol->value.data.trackValue;
 }
 
-static void _appendEventLine(InterpreterContext * context, const char * const format, ...) {
-	va_list arguments;
-	va_start(arguments, format);
-	int length = vsnprintf(NULL, 0, format, arguments);
-	va_end(arguments);
-	if (length < 0) {
-		_reportGenerationError(context, "Cannot format generated event.");
-		return;
+/** Reads the reserved global `velocity` (0..127); falls back to 100 when absent. */
+static int _currentVelocity(InterpreterContext * context) {
+	RuntimeSymbol * symbol = _findRuntimeSymbol(context, "velocity");
+	if (symbol != NULL && symbol->value.initialized && _isNumericValue(symbol->value)) {
+		return (int) _asNumber(symbol->value);
 	}
-	char * text = (char *) calloc((size_t) length + 1, sizeof(char));
-	va_start(arguments, format);
-	vsnprintf(text, (size_t) length + 1, format, arguments);
-	va_end(arguments);
-	EventLine * line = (EventLine *) calloc(1, sizeof(EventLine));
-	line->text = text;
-	if (context->eventsTail == NULL) {
-		context->eventsHead = line;
-		context->eventsTail = line;
-	} else {
-		context->eventsTail->next = line;
-		context->eventsTail = line;
-	}
-}
-
-static void _destroyEvents(EventLine * line) {
-	while (line != NULL) {
-		EventLine * next = line->next;
-		free(line->text);
-		free(line);
-		line = next;
-	}
+	return 100;
 }
 
 static void _destroyTracks(TrackValue * track) {
@@ -306,13 +277,6 @@ static void _destroyTracks(TrackValue * track) {
 		TrackValue * next = track->next;
 		free(track);
 		track = next;
-	}
-}
-
-static void _printEvents(InterpreterContext * context) {
-	printf("Events:\n");
-	for (EventLine * line = context->eventsHead; line != NULL; line = line->next) {
-		printf("%s\n", line->text);
 	}
 }
 
@@ -462,6 +426,9 @@ static void _executeDeclaration(InterpreterContext * context, ASTNode * node) {
 		}
 	}
 	_declareRuntimeSymbol(context, node->data.declaration.name, node->data.declaration.isConst, value);
+	if (strcmp(node->data.declaration.name, "tempo") == 0 && value.initialized && _isNumericValue(value)) {
+		musicProgramSetTempo(context->program, (int) _asNumber(value));
+	}
 }
 
 static void _executeTrackInit(InterpreterContext * context, ASTNode * node) {
@@ -476,7 +443,7 @@ static void _executeTrackInit(InterpreterContext * context, ASTNode * node) {
 	track->next = context->tracks;
 	context->tracks = track;
 	_declareRuntimeSymbol(context, node->data.trackInit.name, false, _trackValue(track));
-	_appendEventLine(context, "track %s channel=%d", track->name, track->channel);
+	musicProgramAddTrack(context->program, track->name, track->channel);
 }
 
 static void _executePlay(InterpreterContext * context, ASTNode * node) {
@@ -488,11 +455,8 @@ static void _executePlay(InterpreterContext * context, ASTNode * node) {
 		return;
 	}
 	double durationNumber = _asNumber(duration);
-	_appendEventLine(context, "t=%.3f play %s note=%d duration=%.3f",
-		context->currentTime,
-		track->name,
-		(int) _asNumber(note),
-		durationNumber);
+	musicProgramAddNote(context->program, context->currentTime, track->channel,
+		track->name, (int) _asNumber(note), _currentVelocity(context), durationNumber);
 	context->currentTime += durationNumber;
 }
 
@@ -504,10 +468,7 @@ static void _executeRest(InterpreterContext * context, ASTNode * node) {
 		return;
 	}
 	double durationNumber = _asNumber(duration);
-	_appendEventLine(context, "t=%.3f rest %s duration=%.3f",
-		context->currentTime,
-		track->name,
-		durationNumber);
+	musicProgramAddRest(context->program, context->currentTime, track->name, durationNumber);
 	context->currentTime += durationNumber;
 }
 
@@ -518,25 +479,17 @@ static void _executeCC(InterpreterContext * context, ASTNode * node) {
 		_reportGenerationError(context, "%s arguments cannot be evaluated.", ccKindName(node->data.ccStmt.kind));
 		return;
 	}
-	const char * control = "volume";
-	if (node->data.ccStmt.kind == CC_PAN) {
-		control = "pan";
-	} else if (node->data.ccStmt.kind == CC_ATTACK) {
-		control = "attack";
+	MidiCCKind ccKind = MIDI_CC_VOLUME;
+	switch (node->data.ccStmt.kind) {
+		case CC_PAN: ccKind = MIDI_CC_PAN; break;
+		case CC_ATTACK: ccKind = MIDI_CC_ATTACK; break;
+		default: ccKind = MIDI_CC_VOLUME; break;
 	}
-	if (value.type == TYPE_INT) {
-		_appendEventLine(context, "t=%.3f cc %s %s=%d",
-			context->currentTime,
-			track->name,
-			control,
-			value.data.intValue);
-	} else {
-		_appendEventLine(context, "t=%.3f cc %s %s=%.3f",
-			context->currentTime,
-			track->name,
-			control,
-			_asNumber(value));
-	}
+	double ccFloat = _asNumber(value);
+	bool wasFloat = (value.type != TYPE_INT);
+	int ccInt = (int) (ccFloat >= 0 ? ccFloat + 0.5 : ccFloat - 0.5);
+	musicProgramAddCC(context->program, context->currentTime, track->channel, track->name,
+		ccKind, ccInt, wasFloat, ccFloat);
 }
 
 static void _executeFor(InterpreterContext * context, ASTNode * node) {
@@ -670,22 +623,28 @@ static void _executeList(InterpreterContext * context, ASTList * list) {
 	}
 }
 
-static CompilationStatus _interpretProgram(ASTNode * tree) {
+static CompilationStatus _interpretProgram(ASTNode * tree, MusicProgram ** outProgram) {
 	InterpreterContext context = {0};
+	context.program = createMusicProgram();
 	if (tree == NULL) {
 		_reportGenerationError(&context, "Cannot generate events from an empty AST.");
 	} else {
 		_executeNode(&context, tree);
 	}
-	if (context.errorCount == 0) {
-		_printEvents(&context);
-	}
 	while (context.scope != NULL) {
 		_popRuntimeScope(&context);
 	}
-	_destroyEvents(context.eventsHead);
 	_destroyTracks(context.tracks);
-	return context.errorCount == 0 ? SUCCEEDED : FAILED;
+	if (context.errorCount == 0) {
+		if (_logger->loggingLevel <= DEBUGGING) {
+			printMusicProgram(context.program);
+		}
+		*outProgram = context.program;
+		return SUCCEEDED;
+	}
+	destroyMusicProgram(context.program);
+	*outProgram = NULL;
+	return FAILED;
 }
 
 /**
@@ -839,17 +798,26 @@ static void _printNode(ASTNode * node, unsigned int level) {
 }
 
 CompilationStatus executeGenerator(CompilerState * compilerState) {
-	logDebugging(_logger, "Generating AST dump and events...");
+	logDebugging(_logger, "Generating MIDI from AST...");
 	ASTNode * tree = (ASTNode *) compilerState->abstractSyntaxtTree;
-	if (tree == NULL) {
-		printf("(empty AST)\n");
-	} else {
-		_printNode(tree, 0);
+	if (_logger->loggingLevel <= DEBUGGING) {
+		if (tree == NULL) {
+			printf("(empty AST)\n");
+		} else {
+			_printNode(tree, 0);
+		}
+		fflush(stdout);
 	}
-	CompilationStatus status = _interpretProgram(tree);
-	fflush(stdout);
+	MusicProgram * program = NULL;
+	CompilationStatus status = _interpretProgram(tree, &program);
 	if (status == SUCCEEDED) {
-		logDebugging(_logger, "Generation is done.");
+		status = emitMidiFile(program, compilerState->midiOutputPath);
+	}
+	if (program != NULL) {
+		destroyMusicProgram(program);
+	}
+	if (status == SUCCEEDED) {
+		logInformation(_logger, "Wrote MIDI file '%s'.", compilerState->midiOutputPath);
 	} else {
 		logError(_logger, "Generation failed.");
 	}

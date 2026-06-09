@@ -18,6 +18,12 @@ typedef struct {
 	 */
 	signed int value;
 
+	/**
+	 * Path of the Standard MIDI File the code generator writes. Set from the
+	 * command line (the `-o` flag); defaults to "output.mid".
+	 */
+	const char * midiOutputPath;
+
 	// TODO: Add a symbol table.
 	// TODO: Add an stack to handle nested scopes.
 	// TODO: Add more configuration.

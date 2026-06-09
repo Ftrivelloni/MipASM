@@ -14,7 +14,7 @@ echo "Compiler should accept..."
 echo ""
 
 for test in $(ls test/c/accept/); do
-	cat "test/c/accept/$test" | ".build/Flex-Bison-Compiler" >/dev/null 2>&1
+	cat "test/c/accept/$test" | ".build/Flex-Bison-Compiler" -o /dev/null >/dev/null 2>&1
 	RESULT="$?"
 	if [ "$RESULT" == "0" ]; then
 		echo -e "    $test, ${GREEN}and it does${OFF} (status $RESULT)"
@@ -29,7 +29,7 @@ echo "Compiler should reject..."
 echo ""
 
 for test in $(ls test/c/reject/); do
-	cat "test/c/reject/$test" | ".build/Flex-Bison-Compiler" >/dev/null 2>&1
+	cat "test/c/reject/$test" | ".build/Flex-Bison-Compiler" -o /dev/null >/dev/null 2>&1
 	RESULT="$?"
 	if [ "$RESULT" != "0" ]; then
 		echo -e "    $test, ${GREEN}and it does${OFF} (status $RESULT)"

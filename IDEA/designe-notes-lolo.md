@@ -60,3 +60,33 @@ Next Backend Step:
 - Decide whether the textual event stream should remain direct stdout output or become a structured backend representation stored outside the generator before MIDI/assembly emission.
 - Redesign `CompilerState` once backend data ownership is chosen, replacing calculator-era fields with event/track generation state if needed.
 - Replace or supplement the debug AST dump once the event stream is stable enough to become the main backend output.
+
+## MIDI Backend Wiring (done)
+
+- The generator now builds a structured `MusicProgram` (see `MidiEmitter.h`) instead of a
+  textual event stream, and `executeGenerator` calls `emitMidiFile(program, midiOutputPath)`
+  to write a Standard MIDI File (format 1). `MidiEmitter.c` owns all MIDI byte encoding.
+- The AST pretty-print and the `Events:` dump are now debug-only: they appear solely when
+  `LOGGING_LEVEL=DEBUGGING`. By default the compiler is quiet and just writes the `.mid`.
+- All generator diagnostics go through the logger (`logError`/`logWarning`/`logInformation`);
+  the hand-rolled `fprintf(stderr, ...)` error path was removed.
+
+### Command-line interface (C-compiler style)
+
+- Usage: `compiler <input.mip> -o <output.mid>`. The input program is read from the named file
+  via `createInputBuffer`/`pushInputBuffer`; with no input file it falls back to standard input
+  (so the existing stdin-piping test harness keeps working). `-o` sets the output path and
+  defaults to `output.mid`.
+- `run.sh <input.mip> -o <output.mid>` forwards the file as an argument instead of piping it.
+
+### Reserved global variables
+
+These are recognized global variable names declared with the existing grammar; no grammar
+changes are needed:
+
+- `tempo` — integer beats per minute for the whole file. Read in `_executeDeclaration` and passed
+  to `musicProgramSetTempo`. Absent ⇒ 120 BPM. Example: `const int tempo = 140;`
+- `velocity` — integer note-on velocity 0–127, read at each `play` so it can change over the
+  piece. Absent ⇒ 100. Example: `int velocity = 100;`
+
+`set_attack` maps to MIDI CC 73; float CC arguments are rounded to an integer 0–127 for emission.
