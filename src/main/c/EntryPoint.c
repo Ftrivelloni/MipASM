@@ -72,7 +72,10 @@ const int main(const int length, const char ** arguments) {
 	CompilationStatus compilationStatus = SUCCEEDED;
 	if (inputPath != NULL) {
 		inputBuffer = createInputBuffer(lexicalAnalyzer, inputPath);
-		if (inputBuffer->file == NULL) {
+		if (inputBuffer == NULL) {
+			compilationStatus = FAILED;
+		}
+		else if (inputBuffer->file == NULL) {
 			logError(logger, "Cannot open input program '%s'.", inputPath);
 			compilationStatus = FAILED;
 		}

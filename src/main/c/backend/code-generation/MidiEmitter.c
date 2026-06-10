@@ -353,7 +353,7 @@ static size_t _countRawEvents(const MusicProgram * program, const char * trackNa
 }
 
 /** Build, sort, delta-encode and write one MTrk chunk for a declared track. */
-static void _writeTrackChunk(FILE * file, const MusicProgram * program, const MidiTrackInfo * track) {
+static bool _writeTrackChunk(FILE * file, const MusicProgram * program, const MidiTrackInfo * track) {
 	unsigned char channel = (unsigned char) (track->channel & 0x0F);
 	if (track->channel < 0 || track->channel > 15) {
 		logWarning(_logger, "Track '%s' channel %d out of range 0..15; using %d.", track->name, track->channel, (int) channel);
@@ -363,6 +363,10 @@ static void _writeTrackChunk(FILE * file, const MusicProgram * program, const Mi
 	RawMidiEvent * raw = NULL;
 	if (rawCount > 0) {
 		raw = (RawMidiEvent *) calloc(rawCount, sizeof(RawMidiEvent));
+		if (raw == NULL) {
+			logError(_logger, "Cannot allocate %zu raw MIDI event(s) for track '%s'.", rawCount, track->name);
+			return false;
+		}
 	}
 
 	size_t index = 0;
@@ -442,6 +446,7 @@ static void _writeTrackChunk(FILE * file, const MusicProgram * program, const Mi
 
 	_bufferFree(&body);
 	free(raw);
+	return true;
 }
 
 CompilationStatus emitMidiFile(const MusicProgram * program, const char * outputPath) {
@@ -467,7 +472,10 @@ CompilationStatus emitMidiFile(const MusicProgram * program, const char * output
 
 	_writeConductorChunk(file, program->tempoBPM);
 	for (MidiTrackInfo * track = program->tracksHead; track != NULL; track = track->next) {
-		_writeTrackChunk(file, program, track);
+		if (!_writeTrackChunk(file, program, track)) {
+			fclose(file);
+			return FAILED;
+		}
 	}
 
 	fclose(file);

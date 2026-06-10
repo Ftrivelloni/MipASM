@@ -321,8 +321,14 @@ static RuntimeValue _evaluateBinary(InterpreterContext * context, ASTNode * node
 			return _intValue((int) result);
 		}
 		case OP_EQ:
+			if (left.type == TYPE_TRACK && right.type == TYPE_TRACK) {
+				return _booleanValue(left.data.trackValue == right.data.trackValue);
+			}
 			return _booleanValue(_asNumber(left) == _asNumber(right));
 		case OP_NEQ:
+			if (left.type == TYPE_TRACK && right.type == TYPE_TRACK) {
+				return _booleanValue(left.data.trackValue != right.data.trackValue);
+			}
 			return _booleanValue(_asNumber(left) != _asNumber(right));
 		case OP_LT:
 			return _booleanValue(_asNumber(left) < _asNumber(right));

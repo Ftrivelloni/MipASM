@@ -50,6 +50,10 @@ static const char * _compilationStatusAsString(const CompilationStatus compilati
 
 InputBuffer * createInputBuffer(LexicalAnalyzer * lexicalAnalyzer, const char * path) {
 	InputBuffer * inputBuffer = (InputBuffer *) calloc(1, sizeof(InputBuffer));
+	if (inputBuffer == NULL) {
+		logError(_logger, "Cannot allocate input buffer for '%s'.", path);
+		return NULL;
+	}
 	inputBuffer->bufferSizeInBytes = YY_BUF_SIZE;
 	inputBuffer->file = fopen(path, "r");
 	inputBuffer->lexicalAnalyzer = lexicalAnalyzer;
