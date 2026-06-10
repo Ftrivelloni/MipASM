@@ -1,0 +1,16 @@
+track lead = init_track(0);
+track bass = init_track(1);
+
+void main() {
+    duration missing;
+
+    if (lead != bass) {
+        if (lead == bass) {
+            play(lead, 60, missing);
+        } else {
+            play(lead, 60, 1.0);
+        }
+    } else {
+        play(lead, 72, missing);
+    }
+}
