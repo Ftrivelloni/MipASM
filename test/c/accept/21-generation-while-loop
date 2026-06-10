@@ -1,0 +1,9 @@
+track lead = init_track(0);
+
+void main() {
+    int i = 0;
+    while (i < 2) {
+        play(lead, 60 + i, 0.5);
+        i = i + 1;
+    }
+}

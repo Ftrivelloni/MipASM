@@ -1,0 +1,6 @@
+track lead = init_track(0);
+
+void main() {
+    int note;
+    play(lead, note, 1.0);
+}

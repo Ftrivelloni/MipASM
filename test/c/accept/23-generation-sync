@@ -1,0 +1,10 @@
+track lead = init_track(0);
+track bass = init_track(1);
+
+void main() {
+    sync {
+        play(lead, 60, 1.0);
+        play(bass, 36, 0.5);
+    }
+    rest(lead, 0.25);
+}

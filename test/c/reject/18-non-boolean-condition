@@ -1,0 +1,7 @@
+track lead = init_track(0);
+
+void main() {
+    if (lead) {
+        play(lead, 60, 1.0);
+    }
+}

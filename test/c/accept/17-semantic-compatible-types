@@ -1,0 +1,11 @@
+const int CHANNEL = 0;
+float ratio = 1;
+duration beat = 1.0;
+boolean ready = 1;
+track lead = init_track(CHANNEL);
+
+void main() {
+    play(lead, 60, beat);
+    rest(lead, ratio);
+    set_volume(lead, 100);
+}

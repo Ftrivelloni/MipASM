@@ -1,0 +1,6 @@
+const int CHANNEL = 2;
+track lead = init_track(CHANNEL);
+
+void main() {
+    set_volume(lead, 100);
+}

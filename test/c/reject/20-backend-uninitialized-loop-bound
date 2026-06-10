@@ -1,0 +1,8 @@
+track lead = init_track(0);
+
+void main() {
+    int limit;
+    for (int i = 0; i < limit; i = i + 1) {
+        play(lead, 60, 0.25);
+    }
+}

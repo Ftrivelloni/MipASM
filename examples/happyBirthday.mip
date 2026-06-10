@@ -1,0 +1,43 @@
+#include "<stdlib/audio>"
+
+const int tempo = 120;
+int velocity = 105;
+
+track melody = init_track(0);
+
+void main() {
+    set_volume(melody, 110);
+
+    // Phrase 1: Happy Birthday to you
+    play(melody, 60, 0.5);  // C4
+    play(melody, 60, 0.5);  // C4
+    play(melody, 62, 1.0);  // D4
+    play(melody, 60, 1.0);  // C4
+    play(melody, 65, 1.0);  // F4
+    play(melody, 64, 2.0);  // E4
+
+    // Phrase 2: Happy Birthday to you
+    play(melody, 60, 0.5);  // C4
+    play(melody, 60, 0.5);  // C4
+    play(melody, 62, 1.0);  // D4
+    play(melody, 60, 1.0);  // C4
+    play(melody, 67, 1.0);  // G4
+    play(melody, 65, 2.0);  // F4
+
+    // Phrase 3: Happy Birthday dear...
+    play(melody, 60, 0.5);  // C4
+    play(melody, 60, 0.5);  // C4
+    play(melody, 72, 1.0);  // C5
+    play(melody, 69, 1.0);  // A4
+    play(melody, 65, 1.0);  // F4
+    play(melody, 64, 1.0);  // E4
+    play(melody, 62, 1.0);  // D4
+
+    // Phrase 4: Happy Birthday to you
+    play(melody, 70, 0.5);  // Bb4
+    play(melody, 70, 0.5);  // Bb4
+    play(melody, 69, 1.0);  // A4
+    play(melody, 65, 1.0);  // F4
+    play(melody, 67, 1.0);  // G4
+    play(melody, 65, 2.0);  // F4
+}

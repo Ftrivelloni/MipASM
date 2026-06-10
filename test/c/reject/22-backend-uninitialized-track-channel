@@ -1,0 +1,6 @@
+int CHANNEL;
+track lead = init_track(CHANNEL);
+
+void main() {
+    play(lead, 60, 1.0);
+}
