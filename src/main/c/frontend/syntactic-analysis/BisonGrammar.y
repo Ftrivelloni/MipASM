@@ -97,11 +97,20 @@ void yyerror(const YYLTYPE * location, const char * message) {
 %type <typeKind> type
 
 /*
- * No %destructor directives: when the parse succeeds, the AST root is owned
- * by CompilerState (set in ProgramSemanticAction) and freed by EntryPoint
- * via destroyASTNode. Bison destructors at YYACCEPT would race against that
- * ownership and produce double-frees / use-after-free.
+ * The accepted program root is owned by CompilerState (set in
+ * ProgramSemanticAction) and freed by EntryPoint via destroyASTNode. Do not
+ * attach a destructor to the start symbol: Bison discards it at YYACCEPT.
+ *
+ * Other heap-backed symbols need destructors so failed parses do not leak
+ * token strings, partial AST nodes, or lists still sitting on the parse stack.
  */
+%destructor { free($$); } ID STRING_LIT
+%destructor { destroyASTNode($$); } main_func block include_stmt
+%destructor { destroyASTNode($$); } declaration assignment track_init global_declaration
+%destructor { destroyASTNode($$); } statement play_stmt rest_stmt sync_block cc_stmt
+%destructor { destroyASTNode($$); } control_stmt if_stmt for_stmt while_stmt
+%destructor { destroyASTNode($$); } expression
+%destructor { destroyASTList($$); } directives global_declarations statements
 
 /**
  * Precedence and associativity (lowest to highest).

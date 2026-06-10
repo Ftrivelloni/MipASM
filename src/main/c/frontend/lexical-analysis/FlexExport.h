@@ -26,6 +26,11 @@ bool flexHasBuffer(LexicalAnalyzer * lexicalAnalyzer) {
 	return YY_CURRENT_BUFFER != NULL;
 }
 
+void * flexCurrentBuffer(LexicalAnalyzer * lexicalAnalyzer) {
+	struct yyguts_t * yyg = (struct yyguts_t *) lexicalAnalyzer->scanner;
+	return YY_CURRENT_BUFFER;
+}
+
 void flexLeaveContext(LexicalAnalyzer * lexicalAnalyzer) {
 	yy_pop_state(lexicalAnalyzer->scanner);
 }
