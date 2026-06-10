@@ -23,12 +23,7 @@ typedef struct {
 	 * command line (the `-o` flag); defaults to "output.mid".
 	 */
 	const char * midiOutputPath;
-
-	// TODO: Add a symbol table.
-	// TODO: Add an stack to handle nested scopes.
-	// TODO: Add more configuration.
-	// TODO: Add whatever you need.
-	// TODO: ...
+	
 } CompilerState;
 
 #endif
