@@ -64,6 +64,12 @@ void yyerror(const YYLTYPE * location, const char * message) {
 %token <token> SET_VOLUME
 %token <token> SET_PAN
 %token <token> SET_ATTACK
+%token <token> SET_SUSTAIN
+%token <token> SET_MODULATION
+%token <token> SET_REVERB
+%token <token> SET_TEMPO
+%token <token> SET_INSTRUMENT
+%token <token> SET_TIME_SIGNATURE
 %token <token> INCLUDE
 
 /* Operators. */
@@ -91,6 +97,7 @@ void yyerror(const YYLTYPE * location, const char * message) {
 %type <node> program main_func block include_stmt
 %type <node> declaration assignment track_init global_declaration
 %type <node> statement play_stmt rest_stmt sync_block cc_stmt
+%type <node> tempo_stmt time_signature_stmt instrument_stmt
 %type <node> control_stmt if_stmt for_stmt while_stmt
 %type <node> expression
 %type <list> directives global_declarations statements
@@ -108,6 +115,7 @@ void yyerror(const YYLTYPE * location, const char * message) {
 %destructor { destroyASTNode($$); } main_func block include_stmt
 %destructor { destroyASTNode($$); } declaration assignment track_init global_declaration
 %destructor { destroyASTNode($$); } statement play_stmt rest_stmt sync_block cc_stmt
+%destructor { destroyASTNode($$); } tempo_stmt time_signature_stmt instrument_stmt
 %destructor { destroyASTNode($$); } control_stmt if_stmt for_stmt while_stmt
 %destructor { destroyASTNode($$); } expression
 %destructor { destroyASTList($$); } directives global_declarations statements
@@ -194,6 +202,9 @@ statement
 	| sync_block             { $$ = $1; }
 	| control_stmt           { $$ = $1; }
 	| cc_stmt                { $$ = $1; }
+	| tempo_stmt             { $$ = $1; }
+	| time_signature_stmt    { $$ = $1; }
+	| instrument_stmt        { $$ = $1; }
 	;
 
 declaration
@@ -244,6 +255,27 @@ cc_stmt
 		{ $$ = CCStmtSemanticAction(CC_PAN, $3, $5); }
 	| SET_ATTACK OPEN_PARENTHESIS ID COMMA expression CLOSE_PARENTHESIS SEMICOLON
 		{ $$ = CCStmtSemanticAction(CC_ATTACK, $3, $5); }
+	| SET_SUSTAIN OPEN_PARENTHESIS ID COMMA expression CLOSE_PARENTHESIS SEMICOLON
+		{ $$ = CCStmtSemanticAction(CC_SUSTAIN, $3, $5); }
+	| SET_MODULATION OPEN_PARENTHESIS ID COMMA expression CLOSE_PARENTHESIS SEMICOLON
+		{ $$ = CCStmtSemanticAction(CC_MODULATION, $3, $5); }
+	| SET_REVERB OPEN_PARENTHESIS ID COMMA expression CLOSE_PARENTHESIS SEMICOLON
+		{ $$ = CCStmtSemanticAction(CC_REVERB, $3, $5); }
+	;
+
+tempo_stmt
+	: SET_TEMPO OPEN_PARENTHESIS expression CLOSE_PARENTHESIS SEMICOLON
+		{ $$ = TempoStmtSemanticAction($3); }
+	;
+
+time_signature_stmt
+	: SET_TIME_SIGNATURE OPEN_PARENTHESIS expression COMMA expression CLOSE_PARENTHESIS SEMICOLON
+		{ $$ = TimeSignatureStmtSemanticAction($3, $5); }
+	;
+
+instrument_stmt
+	: SET_INSTRUMENT OPEN_PARENTHESIS ID COMMA expression CLOSE_PARENTHESIS SEMICOLON
+		{ $$ = InstrumentStmtSemanticAction($3, $5); }
 	;
 
 control_stmt

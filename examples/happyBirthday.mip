@@ -1,11 +1,11 @@
 #include "<stdlib/audio>"
 
-const int tempo = 120;
 int velocity = 105;
 
 track melody = init_track(0);
 
 void main() {
+    set_tempo(120);
     set_volume(melody, 110);
 
     // Phrase 1: Happy Birthday to you

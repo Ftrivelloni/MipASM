@@ -136,6 +136,29 @@ ASTNode * CCStmtSemanticAction(CCKind kind, char * trackName, ASTNode * value) {
 	return node;
 }
 
+ASTNode * TempoStmtSemanticAction(ASTNode * bpm) {
+	_log(__FUNCTION__);
+	ASTNode * node = newASTNode(AST_TEMPO_STMT);
+	node->data.tempoStmt.bpm = bpm;
+	return node;
+}
+
+ASTNode * TimeSignatureStmtSemanticAction(ASTNode * numerator, ASTNode * denominator) {
+	_log(__FUNCTION__);
+	ASTNode * node = newASTNode(AST_TIME_SIGNATURE_STMT);
+	node->data.timeSignatureStmt.numerator = numerator;
+	node->data.timeSignatureStmt.denominator = denominator;
+	return node;
+}
+
+ASTNode * InstrumentStmtSemanticAction(char * trackName, ASTNode * program) {
+	_log(__FUNCTION__);
+	ASTNode * node = newASTNode(AST_INSTRUMENT_STMT);
+	node->data.instrumentStmt.trackName = trackName;
+	node->data.instrumentStmt.program = program;
+	return node;
+}
+
 /* CONTROL FLOW */
 
 ASTNode * IfSemanticAction(ASTNode * condition, ASTNode * thenBlock, ASTNode * elseBlock) {

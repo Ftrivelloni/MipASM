@@ -13,8 +13,9 @@
  * It owns the event model below and exposes a small builder API so the code
  * generator can populate a MusicProgram without knowing anything about the
  * MIDI byte format. The generator interprets the AST and, for every domain
- * statement (track init / play / rest / CC), calls the matching musicProgram*
- * builder; once interpretation succeeds it calls emitMidiFile().
+ * statement (track init / play / rest / CC / tempo / time signature /
+ * instrument), calls the matching musicProgram* builder; once interpretation
+ * succeeds it calls emitMidiFile().
  *
  * This header depends only on the support layer (Logger, CompilationStatus,
  * ModuleDestructor) and libc, NOT on the AST, so it stays decoupled from the
@@ -23,24 +24,33 @@
 
 /** The kind of a high-level musical event produced by the interpreter. */
 typedef enum {
-	MUSIC_EVENT_TRACK_INIT,	/* a `track x = init_track(ch)` declaration   */
-	MUSIC_EVENT_NOTE,		/* a `play(track, note, duration)` statement   */
-	MUSIC_EVENT_REST,		/* a `rest(track, duration)` statement         */
-	MUSIC_EVENT_CC			/* a set_volume / set_pan / set_attack         */
+	MUSIC_EVENT_TRACK_INIT,		/* a `track x = init_track(ch)` declaration */
+	MUSIC_EVENT_NOTE,			/* a `play(track, note, duration)` statement */
+	MUSIC_EVENT_REST,			/* a `rest(track, duration)` statement     */
+	MUSIC_EVENT_CC,				/* a set_volume / set_pan / ... statement  */
+	MUSIC_EVENT_TEMPO,			/* a set_tempo(bpm); conductor-track event */
+	MUSIC_EVENT_TIME_SIGNATURE,	/* a set_time_signature(n, d); conductor-track event */
+	MUSIC_EVENT_PROGRAM_CHANGE	/* a set_instrument(track, program)        */
 } MusicEventKind;
 
 /**
  * The control-change family. The ordering intentionally mirrors the AST's
  * CCKind enum so the generator can translate with a plain cast, but the two
  * enums stay independent so this module never includes the AST header.
- *   MIDI_CC_VOLUME -> controller 7  (Channel Volume)
- *   MIDI_CC_PAN    -> controller 10 (Pan)
- *   MIDI_CC_ATTACK -> controller 73 (Sound Controller 4 / Attack Time)
+ *   MIDI_CC_VOLUME     -> controller 7  (Channel Volume)
+ *   MIDI_CC_PAN        -> controller 10 (Pan)
+ *   MIDI_CC_ATTACK     -> controller 73 (Sound Controller 4 / Attack Time)
+ *   MIDI_CC_SUSTAIN    -> controller 64 (Sustain / Damper Pedal)
+ *   MIDI_CC_MODULATION -> controller 1  (Modulation Wheel)
+ *   MIDI_CC_REVERB     -> controller 91 (Effects 1 Depth / Reverb Send)
  */
 typedef enum {
 	MIDI_CC_VOLUME,
 	MIDI_CC_PAN,
-	MIDI_CC_ATTACK
+	MIDI_CC_ATTACK,
+	MIDI_CC_SUSTAIN,
+	MIDI_CC_MODULATION,
+	MIDI_CC_REVERB
 } MidiCCKind;
 
 /**
@@ -66,6 +76,16 @@ typedef struct MusicEvent {
 	bool ccValueWasFloat;		/* keeps the debug print byte-identical    */
 	double ccValueFloat;		/* original float value, for the debug print */
 
+	/* TEMPO (conductor track: trackName == NULL) */
+	int tempoBPM;				/* beats per minute, > 0                   */
+
+	/* TIME_SIGNATURE (conductor track: trackName == NULL) */
+	int tsNumerator;			/* beats per bar, 1..255                   */
+	int tsDenominator;			/* beat unit, a power of two in 1..32      */
+
+	/* PROGRAM_CHANGE */
+	int programNumber;			/* General MIDI program 0..127             */
+
 	struct MusicEvent * next;
 } MusicEvent;
 
@@ -88,7 +108,6 @@ typedef struct {
 	MidiTrackInfo * tracksHead;
 	MidiTrackInfo * tracksTail;
 	int trackCount;
-	int tempoBPM;				/* from the global `tempo`; default 120    */
 } MusicProgram;
 
 /** Initialize module's internal state. */
@@ -96,14 +115,20 @@ ModuleDestructor initializeMidiEmitterModule(void);
 
 /* BUILDER API (called by the code generator) */
 
-/** Allocates an empty program with the default tempo (120 BPM). */
+/** Allocates an empty program. */
 MusicProgram * createMusicProgram(void);
-
-/** Sets the program tempo in beats per minute (ignored if not positive). */
-void musicProgramSetTempo(MusicProgram * program, int bpm);
 
 /** Records a track declaration and creates its MTrk chunk slot. */
 void musicProgramAddTrack(MusicProgram * program, const char * name, int channel);
+
+/** Records a tempo change (FF 51 in the conductor track). `bpm` must be positive. */
+void musicProgramAddTempo(MusicProgram * program, double beat, int bpm);
+
+/** Records a time-signature change (FF 58 in the conductor track). */
+void musicProgramAddTimeSignature(MusicProgram * program, double beat, int numerator, int denominator);
+
+/** Records an instrument selection (Program Change) for a track. */
+void musicProgramAddProgramChange(MusicProgram * program, double beat, int channel, const char * track, int programNumber);
 
 /** Records a played note (start beat, channel, note, velocity, length). */
 void musicProgramAddNote(MusicProgram * program, double beat, int channel, const char * track, int note, int velocity, double durationBeats);

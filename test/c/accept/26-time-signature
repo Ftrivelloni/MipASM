@@ -1,0 +1,10 @@
+track melody = init_track(0);
+
+void main() {
+    set_time_signature(4, 4);
+    play(melody, 60, 1.0);
+    set_time_signature(3, 4);
+    play(melody, 62, 1.0);
+    set_time_signature(6, 8);
+    play(melody, 64, 1.0);
+}

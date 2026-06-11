@@ -1,0 +1,6 @@
+track melody = init_track(0);
+
+void main() {
+    set_instrument(ghost, 40);
+    play(melody, 60, 1.0);
+}

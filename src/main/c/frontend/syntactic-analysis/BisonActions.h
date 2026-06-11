@@ -36,6 +36,9 @@ ASTNode * PlaySemanticAction(char * trackName, ASTNode * note, ASTNode * duratio
 ASTNode * RestSemanticAction(char * trackName, ASTNode * duration);
 ASTNode * SyncBlockSemanticAction(ASTNode * block);
 ASTNode * CCStmtSemanticAction(CCKind kind, char * trackName, ASTNode * value);
+ASTNode * TempoStmtSemanticAction(ASTNode * bpm);
+ASTNode * TimeSignatureStmtSemanticAction(ASTNode * numerator, ASTNode * denominator);
+ASTNode * InstrumentStmtSemanticAction(char * trackName, ASTNode * program);
 
 /* Control flow. */
 ASTNode * IfSemanticAction(ASTNode * condition, ASTNode * thenBlock, ASTNode * elseBlock);

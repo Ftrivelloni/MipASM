@@ -35,6 +35,9 @@ typedef enum {
 	AST_REST,
 	AST_SYNC_BLOCK,
 	AST_CC_STMT,
+	AST_TEMPO_STMT,
+	AST_TIME_SIGNATURE_STMT,
+	AST_INSTRUMENT_STMT,
 
 	AST_IF,
 	AST_FOR,
@@ -65,7 +68,10 @@ typedef enum {
 typedef enum {
 	CC_VOLUME,
 	CC_PAN,
-	CC_ATTACK
+	CC_ATTACK,
+	CC_SUSTAIN,
+	CC_MODULATION,
+	CC_REVERB
 } CCKind;
 
 struct ASTList {
@@ -131,6 +137,20 @@ struct ASTNode {
 			char * trackName;
 			ASTNode * value;
 		} ccStmt;
+
+		struct {
+			ASTNode * bpm;
+		} tempoStmt;
+
+		struct {
+			ASTNode * numerator;
+			ASTNode * denominator;
+		} timeSignatureStmt;
+
+		struct {
+			char * trackName;
+			ASTNode * program;
+		} instrumentStmt;
 
 		struct {
 			ASTNode * condition;

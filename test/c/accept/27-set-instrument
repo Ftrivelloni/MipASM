@@ -1,0 +1,11 @@
+track lead = init_track(0);
+track bass = init_track(1);
+const int violin = 40;
+
+void main() {
+    set_instrument(lead, violin);
+    set_instrument(bass, 32);
+    play(lead, 60, 1.0);
+    set_instrument(lead, 73);
+    play(lead, 62, 1.0);
+}

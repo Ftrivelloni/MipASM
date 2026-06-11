@@ -2,14 +2,14 @@
 // A longer, recognizable demo for the MipASM compiler — long enough (~40s) to
 // confirm real playback in any media player.
 //
-// It exercises most of the language: reserved globals (tempo/velocity), three
-// tracks with stereo panning and volume, a rising intro run (for-loop), the
-// "Ode to Joy" theme played twice (while-loop) over a pulsing bass (sync), a
-// louder dynamic on the repeat (if/else), and a sustained 3-voice final chord.
+// It exercises most of the language: tempo and time signature, instrument
+// selection, three tracks with stereo panning and volume, a rising intro run
+// (for-loop), the "Ode to Joy" theme played twice (while-loop) over a pulsing
+// bass (sync), a louder dynamic on the repeat (if/else), a final ritardando
+// (mid-song set_tempo), and a sustained 3-voice final chord.
 
 #include "<stdlib/audio>"
 
-const int tempo = 100;     // 100 BPM  -> 1 beat = 0.6s
 int velocity = 96;         // note-on velocity, raised on the repeat below
 
 track lead = init_track(0);
@@ -17,6 +17,14 @@ track bass = init_track(1);
 track harmony = init_track(2);
 
 void main() {
+    set_tempo(100);              // 100 BPM -> 1 beat = 0.6s
+    set_time_signature(4, 4);
+
+    // Orchestration: strings over an acoustic bass.
+    set_instrument(lead, 40);    // violin
+    set_instrument(bass, 32);    // acoustic bass
+    set_instrument(harmony, 48); // string ensemble
+
     // Mix: melody to the right, bass to the left, harmony centred.
     set_volume(lead, 112);
     set_pan(lead, 84);
@@ -25,6 +33,7 @@ void main() {
     set_volume(harmony, 88);
     set_pan(harmony, 64);
     set_attack(harmony, 20);
+    set_reverb(harmony, 60);
 
     // Intro: a rising run so notes are heard immediately (for-loop).
     for (int i = 0; i < 12; i = i + 1) {
@@ -78,7 +87,8 @@ void main() {
         rep = rep + 1;
     }
 
-    // Big finish: a sustained C-major chord across all three voices.
+    // Big finish: slow down and sustain a C-major chord across all voices.
+    set_tempo(70);               // ritardando for the final chord
     sync {
         play(lead, 76, 4.0);      // E5
         play(harmony, 67, 4.0);   // G4
