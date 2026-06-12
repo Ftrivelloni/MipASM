@@ -284,11 +284,17 @@ static void _analyzeNode(AnalyzerContext * context, ASTNode * node) {
 	switch (node->nodeType) {
 		case AST_PROGRAM:
 			_pushScope(context);
+			_analyzeList(context, node->data.program.includes);
 			_analyzeList(context, node->data.program.globalDecls);
 			_analyzeNode(context, node->data.program.mainFunc);
 			_popScope(context);
 			break;
 		case AST_INCLUDE:
+			/* Well-formed includes are consumed by the lexer and never reach
+			   the AST; one that did (e.g. split by a block comment) loaded
+			   nothing, which must not pass silently. */
+			_reportError(context, "Malformed #include directive \"%s\" loads no library.",
+				node->data.include.path == NULL ? "" : node->data.include.path);
 			break;
 		case AST_MAIN_FUNC:
 			_analyzeNode(context, node->data.mainFunc.body);

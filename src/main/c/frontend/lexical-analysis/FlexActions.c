@@ -1,11 +1,26 @@
 #include "FlexActions.h"
+#include "../../support/configuration/LibraryLocator.h"
+#include <stdio.h>
 
 /* MODULE INTERNAL STATE */
+
+/** A standard library loaded through an #include directive. The canonical
+ * path is the include-once deduplication key; the input buffer is retained
+ * until shutdown because yypop_buffer_state does not close the file. */
+typedef struct {
+	char * canonicalPath;
+	InputBuffer * inputBuffer;
+} LoadedLibrary;
 
 static bool _logIgnoredLexemes = true;
 static InputBuffer * _inputBuffer = NULL;
 static LexicalAnalyzer * _lexicalAnalyzer = NULL;
 static Logger * _logger = NULL;
+static LoadedLibrary * _loadedLibraries = NULL;
+static size_t _loadedLibraryCount = 0;
+static size_t _loadedLibraryCapacity = 0;
+static char * _libraryRoot = NULL;
+static bool _libraryRootResolved = false;
 
 /** Shutdown module's internal state. */
 void _shutdownFlexActionsModule() {
@@ -18,6 +33,17 @@ void _shutdownFlexActionsModule() {
 		destroyInputBuffer(_inputBuffer);
 		_inputBuffer = NULL;
 	}
+	for (size_t k = 0; k < _loadedLibraryCount; ++k) {
+		destroyInputBuffer(_loadedLibraries[k].inputBuffer);
+		free(_loadedLibraries[k].canonicalPath);
+	}
+	free(_loadedLibraries);
+	_loadedLibraries = NULL;
+	_loadedLibraryCount = 0;
+	_loadedLibraryCapacity = 0;
+	free(_libraryRoot);
+	_libraryRoot = NULL;
+	_libraryRootResolved = false;
 	_lexicalAnalyzer = NULL;
 }
 
@@ -26,6 +52,11 @@ ModuleDestructor initializeFlexActionsModule(LexicalAnalyzer * lexicalAnalyzer) 
 	_lexicalAnalyzer = lexicalAnalyzer;
 	_logger = createLogger("FlexActions");
 	_logIgnoredLexemes = getBooleanOrDefault("LOG_IGNORED_LEXEMES", _logIgnoredLexemes);
+	_loadedLibraries = NULL;
+	_loadedLibraryCount = 0;
+	_loadedLibraryCapacity = 0;
+	_libraryRoot = NULL;
+	_libraryRootResolved = false;
 	return _shutdownFlexActionsModule;
 }
 
@@ -179,4 +210,83 @@ CompilationStatus UnknownLexemeAction() {
 	_logTokenAction(__FUNCTION__, token);
 	destroyToken(token);
 	return FAILED;
+}
+
+/** Returns true when the canonical path is already in the loaded set. */
+static bool _isLibraryLoaded(const char * canonicalPath) {
+	for (size_t k = 0; k < _loadedLibraryCount; ++k) {
+		if (strcmp(_loadedLibraries[k].canonicalPath, canonicalPath) == 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/** Adds a library to the loaded set; returns false on allocation failure. */
+static bool _registerLoadedLibrary(char * canonicalPath, InputBuffer * inputBuffer) {
+	if (_loadedLibraryCount == _loadedLibraryCapacity) {
+		size_t newCapacity = _loadedLibraryCapacity == 0 ? 8 : _loadedLibraryCapacity * 2;
+		LoadedLibrary * grown = (LoadedLibrary *) realloc(_loadedLibraries, newCapacity * sizeof(LoadedLibrary));
+		if (grown == NULL) {
+			return false;
+		}
+		_loadedLibraries = grown;
+		_loadedLibraryCapacity = newCapacity;
+	}
+	_loadedLibraries[_loadedLibraryCount].canonicalPath = canonicalPath;
+	_loadedLibraries[_loadedLibraryCount].inputBuffer = inputBuffer;
+	++_loadedLibraryCount;
+	return true;
+}
+
+CompilationStatus IncludeDirectiveLexemeAction() {
+	Token * token = createToken(_lexicalAnalyzer, INCLUDE);
+	_logTokenAction(__FUNCTION__, token);
+	CompilationStatus status = IN_PROGRESS;
+	/* The lexeme is the whole directive: #include "<name>". */
+	const char * open = strchr(token->lexeme, '<');
+	const char * close = strrchr(token->lexeme, '>');
+	size_t nameLength = (size_t) (close - open) - 1;
+	char * name = (char *) calloc(nameLength + 1, sizeof(char));
+	memcpy(name, open + 1, nameLength);
+
+	if (!_libraryRootResolved) {
+		_libraryRoot = resolveLibraryRoot();
+		_libraryRootResolved = true;
+	}
+	if (_libraryRoot == NULL) {
+		/* Plain stderr (not the logger) so the failure is visible at any
+		   LOGGING_LEVEL, matching the CLI's error style. */
+		fprintf(stderr, "mipasm: fatal error: cannot locate the MipASM library directory; set MIPASM_LIB_PATH\n");
+		status = FAILED;
+	}
+	else {
+		char * canonicalPath = resolveLibraryFile(_libraryRoot, name);
+		if (canonicalPath == NULL) {
+			fprintf(stderr, "mipasm: fatal error: cannot open library '<%s>': no such file '%s/%s.mip'\n",
+				name, _libraryRoot, name);
+			status = FAILED;
+		}
+		else if (_isLibraryLoaded(canonicalPath)) {
+			logDebugging(_logger, "Library '<%s>' is already loaded; skipping.", name);
+			free(canonicalPath);
+		}
+		else {
+			InputBuffer * libraryBuffer = createInputBuffer(_lexicalAnalyzer, canonicalPath);
+			if (libraryBuffer == NULL || libraryBuffer->file == NULL
+				|| !_registerLoadedLibrary(canonicalPath, libraryBuffer)) {
+				fprintf(stderr, "mipasm: fatal error: cannot read library file '%s'\n", canonicalPath);
+				destroyInputBuffer(libraryBuffer);
+				free(canonicalPath);
+				status = FAILED;
+			}
+			else {
+				logDebugging(_logger, "Loading library '<%s>' from '%s'.", name, canonicalPath);
+				pushInputBuffer(libraryBuffer);
+			}
+		}
+	}
+	free(name);
+	destroyToken(token);
+	return status;
 }

@@ -50,8 +50,10 @@ static void _printUsage(FILE * stream) {
 		"  --version      Print version information and exit.\n"
 		"\n"
 		"Environment:\n"
-		"  LOGGING_LEVEL  Minimum log level: ALL, DEBUGGING, INFORMATION, WARNING,\n"
-		"                 ERROR, CRITICAL.\n");
+		"  LOGGING_LEVEL    Minimum log level: ALL, DEBUGGING, INFORMATION, WARNING,\n"
+		"                   ERROR, CRITICAL.\n"
+		"  MIPASM_LIB_PATH  Directory holding the standard library (overrides the\n"
+		"                   locations searched next to the executable).\n");
 }
 
 static void _printVersion(void) {
