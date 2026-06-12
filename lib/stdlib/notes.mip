@@ -1,0 +1,131 @@
+// <stdlib/notes> — MIDI note numbers by name.
+//
+// CS4 means C#4 (sharps use an S; there are no flat names). Middle C
+// is C4 = 60 and the A440 tuning reference is A4 = 69; one octave is
+// 12 semitones.
+
+// Octave 0.
+const int C0 = 12;
+const int CS0 = 13;
+const int D0 = 14;
+const int DS0 = 15;
+const int E0 = 16;
+const int F0 = 17;
+const int FS0 = 18;
+const int G0 = 19;
+const int GS0 = 20;
+const int A0 = 21;
+const int AS0 = 22;
+const int B0 = 23;
+
+// Octave 1.
+const int C1 = 24;
+const int CS1 = 25;
+const int D1 = 26;
+const int DS1 = 27;
+const int E1 = 28;
+const int F1 = 29;
+const int FS1 = 30;
+const int G1 = 31;
+const int GS1 = 32;
+const int A1 = 33;
+const int AS1 = 34;
+const int B1 = 35;
+
+// Octave 2.
+const int C2 = 36;
+const int CS2 = 37;
+const int D2 = 38;
+const int DS2 = 39;
+const int E2 = 40;
+const int F2 = 41;
+const int FS2 = 42;
+const int G2 = 43;
+const int GS2 = 44;
+const int A2 = 45;
+const int AS2 = 46;
+const int B2 = 47;
+
+// Octave 3.
+const int C3 = 48;
+const int CS3 = 49;
+const int D3 = 50;
+const int DS3 = 51;
+const int E3 = 52;
+const int F3 = 53;
+const int FS3 = 54;
+const int G3 = 55;
+const int GS3 = 56;
+const int A3 = 57;
+const int AS3 = 58;
+const int B3 = 59;
+
+// Octave 4.
+const int C4 = 60;
+const int CS4 = 61;
+const int D4 = 62;
+const int DS4 = 63;
+const int E4 = 64;
+const int F4 = 65;
+const int FS4 = 66;
+const int G4 = 67;
+const int GS4 = 68;
+const int A4 = 69;
+const int AS4 = 70;
+const int B4 = 71;
+
+// Octave 5.
+const int C5 = 72;
+const int CS5 = 73;
+const int D5 = 74;
+const int DS5 = 75;
+const int E5 = 76;
+const int F5 = 77;
+const int FS5 = 78;
+const int G5 = 79;
+const int GS5 = 80;
+const int A5 = 81;
+const int AS5 = 82;
+const int B5 = 83;
+
+// Octave 6.
+const int C6 = 84;
+const int CS6 = 85;
+const int D6 = 86;
+const int DS6 = 87;
+const int E6 = 88;
+const int F6 = 89;
+const int FS6 = 90;
+const int G6 = 91;
+const int GS6 = 92;
+const int A6 = 93;
+const int AS6 = 94;
+const int B6 = 95;
+
+// Octave 7.
+const int C7 = 96;
+const int CS7 = 97;
+const int D7 = 98;
+const int DS7 = 99;
+const int E7 = 100;
+const int F7 = 101;
+const int FS7 = 102;
+const int G7 = 103;
+const int GS7 = 104;
+const int A7 = 105;
+const int AS7 = 106;
+const int B7 = 107;
+
+// Octave 8.
+const int C8 = 108;
+const int CS8 = 109;
+const int D8 = 110;
+const int DS8 = 111;
+const int E8 = 112;
+const int F8 = 113;
+const int FS8 = 114;
+const int G8 = 115;
+const int GS8 = 116;
+const int A8 = 117;
+const int AS8 = 118;
+const int B8 = 119;

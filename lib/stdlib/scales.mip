@@ -1,0 +1,20 @@
+// <stdlib/scales> — scale intervals, in semitones.
+//
+// Add these to a root note number to build scales and melodies:
+//     play(lead, root + MAJOR_THIRD, QUARTER);
+
+const int HALF_STEP = 1;
+const int WHOLE_STEP = 2;
+
+const int MINOR_SECOND = 1;
+const int MAJOR_SECOND = 2;
+const int MINOR_THIRD = 3;
+const int MAJOR_THIRD = 4;
+const int PERFECT_FOURTH = 5;
+const int TRITONE = 6;
+const int PERFECT_FIFTH = 7;
+const int MINOR_SIXTH = 8;
+const int MAJOR_SIXTH = 9;
+const int MINOR_SEVENTH = 10;
+const int MAJOR_SEVENTH = 11;
+const int OCTAVE = 12;
