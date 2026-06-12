@@ -61,9 +61,12 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 	target_compile_definitions(mipasm PRIVATE MIPASM_VERSION="${PROJECT_VERSION}")
 
 	# Installs the compiler into the standard binary directory, so that
-	# "cmake --install <builddir>" makes the "mipasm" command available.
+	# "cmake --install <builddir>" makes the "mipasm" command available,
+	# and the standard library where the compiler searches for it
+	# (<bindir>/../share/mipasm/lib).
 	include(GNUInstallDirs)
 	install(TARGETS mipasm RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+	install(DIRECTORY ${CMAKE_SOURCE_DIR}/lib/ DESTINATION ${CMAKE_INSTALL_DATADIR}/mipasm/lib)
 else ()
 	message(NOTICE "The C compiler is unknown.")
 endif ()
