@@ -248,6 +248,10 @@ CompilationStatus IncludeDirectiveLexemeAction() {
 	const char * close = strrchr(token->lexeme, '>');
 	size_t nameLength = (size_t) (close - open) - 1;
 	char * name = (char *) calloc(nameLength + 1, sizeof(char));
+	if (name == NULL) {
+		destroyToken(token);
+		return FAILED;
+	}
 	memcpy(name, open + 1, nameLength);
 
 	if (!_libraryRootResolved) {

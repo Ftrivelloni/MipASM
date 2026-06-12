@@ -37,6 +37,9 @@ MusicProgram * createMusicProgram(void) {
 /** Allocates a zeroed event of the given kind and appends it to the program. */
 static MusicEvent * _appendEvent(MusicProgram * program, MusicEventKind kind) {
 	MusicEvent * event = (MusicEvent *) calloc(1, sizeof(MusicEvent));
+	if (event == NULL) {
+		return NULL;
+	}
 	event->kind = kind;
 	if (program->eventsTail == NULL) {
 		program->eventsHead = event;
@@ -53,10 +56,16 @@ void musicProgramAddTrack(MusicProgram * program, const char * name, int channel
 		return;
 	}
 	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_TRACK_INIT);
+	if (event == NULL) {
+		return;
+	}
 	event->trackName = name;
 	event->channel = channel;
 
 	MidiTrackInfo * info = (MidiTrackInfo *) calloc(1, sizeof(MidiTrackInfo));
+	if (info == NULL) {
+		return;			/* the event is already linked and freed by destroyMusicProgram */
+	}
 	info->name = name;
 	info->channel = channel;
 	if (program->tracksTail == NULL) {
@@ -74,6 +83,9 @@ void musicProgramAddNote(MusicProgram * program, double beat, int channel, const
 		return;
 	}
 	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_NOTE);
+	if (event == NULL) {
+		return;
+	}
 	event->beat = beat;
 	event->channel = channel;
 	event->trackName = track;
@@ -87,6 +99,9 @@ void musicProgramAddRest(MusicProgram * program, double beat, const char * track
 		return;
 	}
 	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_REST);
+	if (event == NULL) {
+		return;
+	}
 	event->beat = beat;
 	event->trackName = track;
 	event->durationBeats = durationBeats;
@@ -97,6 +112,9 @@ void musicProgramAddCC(MusicProgram * program, double beat, int channel, const c
 		return;
 	}
 	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_CC);
+	if (event == NULL) {
+		return;
+	}
 	event->beat = beat;
 	event->channel = channel;
 	event->trackName = track;
@@ -111,6 +129,9 @@ void musicProgramAddTempo(MusicProgram * program, double beat, int bpm) {
 		return;
 	}
 	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_TEMPO);
+	if (event == NULL) {
+		return;
+	}
 	event->beat = beat;
 	event->tempoBPM = bpm;	/* trackName stays NULL: conductor-track event */
 }
@@ -120,6 +141,9 @@ void musicProgramAddTimeSignature(MusicProgram * program, double beat, int numer
 		return;
 	}
 	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_TIME_SIGNATURE);
+	if (event == NULL) {
+		return;
+	}
 	event->beat = beat;
 	event->tsNumerator = numerator;	/* trackName stays NULL: conductor-track event */
 	event->tsDenominator = denominator;
@@ -130,6 +154,9 @@ void musicProgramAddProgramChange(MusicProgram * program, double beat, int chann
 		return;
 	}
 	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_PROGRAM_CHANGE);
+	if (event == NULL) {
+		return;
+	}
 	event->beat = beat;
 	event->channel = channel;
 	event->trackName = track;
