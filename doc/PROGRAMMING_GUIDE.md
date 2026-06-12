@@ -36,19 +36,35 @@ Build the compiler once (needs `cmake`, `make`, `gcc`, `flex` and `bison`):
 Compile a program and play the result:
 
 ```bash
-./src/main/bash/run.sh hello.mip -o hello.mid
-# open hello.mid in any media player / DAW, or: timidity hello.mid
+mipasm hello.mip
+# writes hello.mid next to the input; open it in any media player / DAW,
+# or: timidity hello.mid
 ```
 
-- The input is a file argument; `-o <path>` chooses the output (default
-  `output.mid`). Without a file argument the compiler reads from stdin.
+(Until you install the compiler, `./src/main/bash/run.sh` runs the development
+build with exactly the same arguments.)
+
+- The input is a file argument; `-o <path>` chooses the output. Without `-o`,
+  the output is the input path with its `.mip` suffix replaced by `.mid`.
+- Without a file argument — or with `-` — the compiler reads from stdin and
+  writes `a.mid` by default.
+- `mipasm --help` lists every option; `mipasm --version` prints the version.
 - The exit status is `0` when compilation succeeds, non-zero otherwise.
 - Run the whole test suite with `./src/main/bash/test.sh`.
 - Set `LOGGING_LEVEL=DEBUGGING` to print the AST and the generated event list,
   which is the fastest way to see *when* every note happens:
 
 ```bash
-LOGGING_LEVEL=DEBUGGING ./src/main/bash/run.sh hello.mip
+LOGGING_LEVEL=DEBUGGING mipasm hello.mip
+```
+
+To install the `mipasm` command system-wide (a release build, without the
+development sanitizers):
+
+```bash
+cmake -S . -B .build-release -DMIPASM_SANITIZE=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build .build-release
+sudo cmake --install .build-release
 ```
 
 ## 2. Anatomy of a program
@@ -313,7 +329,7 @@ void main() {
 Compile and listen:
 
 ```bash
-./src/main/bash/run.sh waltz.mip -o waltz.mid
+mipasm waltz.mip   # writes waltz.mid
 ```
 
 The repository's `examples/` directory has three more: `happyBirthday.mip`

@@ -3,6 +3,7 @@
 # Folders.
 .DS_Store/
 /.build/
+/build/
 /.git/
 /.vs/
 /.vscode/

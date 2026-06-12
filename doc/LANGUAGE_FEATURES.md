@@ -7,7 +7,7 @@ the MIDI file, and where it is implemented in the compiler.
 Compile a program with:
 
 ```bash
-./src/main/bash/run.sh examples/ode-to-joy.mip -o song.mid
+mipasm examples/ode-to-joy.mip   # writes examples/ode-to-joy.mid
 ```
 
 ## Program structure

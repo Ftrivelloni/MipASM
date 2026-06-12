@@ -253,6 +253,6 @@ src/main/bash/test.sh
 Compile an example to MIDI:
 
 ```bash
-src/main/bash/run.sh examples/ode-to-joy.mip -o output.mid
+mipasm examples/ode-to-joy.mip
 ```
 
