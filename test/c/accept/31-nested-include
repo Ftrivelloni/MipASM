@@ -1,0 +1,7 @@
+#include "<stdlib/chords>"
+#include "<stdlib/scales>"
+
+const int dom7 = MAJOR_THIRD + PERFECT_FIFTH + DOMINANT_SEVENTH;
+
+void main() {
+}

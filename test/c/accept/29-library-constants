@@ -1,0 +1,20 @@
+#include "<stdlib/audio>"
+#include "<stdlib/instruments>"
+#include "<stdlib/drums>"
+#include "<stdlib/notes>"
+
+int velocity = MEZZO_FORTE;
+
+track lead = init_track(0);
+track kit = init_track(DRUM_CHANNEL);
+
+void main() {
+    set_instrument(lead, VIOLIN);
+    set_volume(lead, FORTE);
+    set_pan(lead, LEFT);
+    sync {
+        play(lead, C4, QUARTER);
+        play(kit, KICK, EIGHTH);
+    }
+    play(lead, A4, HALF);
+}

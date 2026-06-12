@@ -1,0 +1,7 @@
+#include "<stdlib/notes>"
+#include "<stdlib/notes>"
+
+const int tuning = A4;
+
+void main() {
+}
