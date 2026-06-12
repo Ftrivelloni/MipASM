@@ -630,7 +630,7 @@ CompilationStatus emitMidiFile(const MusicProgram * program, const char * output
 		logError(_logger, "Cannot emit a MIDI file from a NULL program.");
 		return FAILED;
 	}
-	const char * path = (outputPath != NULL && outputPath[0] != '\0') ? outputPath : "output.mid";
+	const char * path = (outputPath != NULL && outputPath[0] != '\0') ? outputPath : "a.mid";
 	FILE * file = fopen(path, "wb");
 	if (file == NULL) {
 		logError(_logger, "Cannot open '%s' for writing.", path);
