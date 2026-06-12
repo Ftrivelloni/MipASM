@@ -31,6 +31,50 @@ happen one after another, even across different tracks. Statements inside a
 
 ---
 
+## Libraries and `#include`
+
+```c
+#include "<stdlib/instruments>"      // loads <libroot>/stdlib/instruments.mip
+```
+
+`#include "<name>"` resolves `name` to `<libroot>/name.mip` and splices that
+file's tokens into the program right at the directive, so its global
+declarations parse as if written in place. Libraries are ordinary MipASM
+files containing global declarations (by convention `const` definitions) and
+optionally further `#include` directives — no `main()`.
+
+- **Search order for `<libroot>`**: the `MIPASM_LIB_PATH` environment
+  variable; otherwise `../lib` relative to the executable (a development
+  checkout: `.build/mipasm` → repo `lib/`); otherwise `../share/mipasm/lib`
+  (an installed compiler). The exe-relative candidates must contain a
+  `stdlib/` subdirectory, so unrelated `lib` directories are never picked.
+- **Include-once**: each library (keyed by canonical path) loads at most
+  once per compilation; repeated and circular includes are skipped silently.
+- **Missing library**: a fatal error (`mipasm: fatal error: cannot open
+  library ...`), non-zero exit, no MIDI file.
+- **Placement**: the directive splices tokens wherever it appears, so the
+  convention — and the only placement that makes sense — is the top of the
+  file, before global declarations.
+
+Shipped libraries (`lib/stdlib/` in the repository): `audio` (dynamics,
+note-length `duration`s, pan), `instruments` (the 128 GM programs),
+`drums` (the GM percussion map + `DRUM_CHANNEL`), `notes` (`C0`..`B8`,
+sharps spelled with `S`: `CS4`), `scales` and `chords` (semitone intervals;
+`chords` includes `scales`).
+
+Implementation: a combined rule in `FlexPatterns.l` matches the entire
+well-formed directive and calls `IncludeDirectiveLexemeAction`
+(`FlexActions.c`), which resolves the file via `LibraryLocator`
+(`support/configuration/`) and pushes it onto the flex buffer stack
+(`pushInputBuffer`, `Frontend.c`); at the library's EOF, `EOFLexemeAction`
+pops back to the including file. No token reaches the parser for a
+well-formed include; a malformed one falls through to the bare `#include`
+keyword rule and fails at parse (or, if it still reaches the AST, the
+SemanticAnalyzer rejects it). Known limitation: an error inside a library
+reports the library-local line number without naming the file.
+
+---
+
 ## Tracks and channels
 
 ```c

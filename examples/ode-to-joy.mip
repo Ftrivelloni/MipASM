@@ -9,6 +9,7 @@
 // (mid-song set_tempo), and a sustained 3-voice final chord.
 
 #include "<stdlib/audio>"
+#include "<stdlib/instruments>"
 
 int velocity = 96;         // note-on velocity, raised on the repeat below
 
@@ -21,9 +22,9 @@ void main() {
     set_time_signature(4, 4);
 
     // Orchestration: strings over an acoustic bass.
-    set_instrument(lead, 40);    // violin
-    set_instrument(bass, 32);    // acoustic bass
-    set_instrument(harmony, 48); // string ensemble
+    set_instrument(lead, VIOLIN);
+    set_instrument(bass, ACOUSTIC_BASS);
+    set_instrument(harmony, STRING_ENSEMBLE_1);
 
     // Mix: melody to the right, bass to the left, harmony centred.
     set_volume(lead, 112);

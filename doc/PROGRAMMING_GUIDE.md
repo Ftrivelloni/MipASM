@@ -82,8 +82,11 @@ void main() {                      // 3. exactly one main(), no arguments
 }
 ```
 
-1. **Directives** — `#include` lines are accepted for familiarity; they do not
-   load code yet.
+1. **Directives** — each `#include "<name>"` loads the library `name.mip` from
+   the compiler's library directory, splicing its declarations into your
+   program as if you had written them there. A library is loaded at most once
+   (repeated or circular includes are skipped), libraries may include other
+   libraries, and including a library that does not exist is a fatal error.
 2. **Globals** — variable declarations and `init_track` calls. Globals are
    visible everywhere in `main()`.
 3. **`main()`** — the piece itself. All music statements live here (or in
@@ -95,6 +98,40 @@ Comments are exactly like C: `// to end of line` and `/* block */`.
 > time. Loops are unrolled, variables are evaluated, and every `play`, `rest`,
 > `set_*` call is recorded as a timed event. The MIDI file is the trace of that
 > run — there is no runtime.
+
+### The standard library
+
+Six libraries of named constants ship with the compiler, so you can write
+`set_instrument(lead, VIOLIN)` instead of remembering that violins are
+program 40:
+
+| Library | Provides | Sample names |
+|---|---|---|
+| `<stdlib/audio>` | dynamics (velocities), note lengths (`duration`), pan | `PIANISSIMO`..`FORTISSIMO`, `WHOLE` `HALF` `QUARTER` `EIGHTH` `SIXTEENTH`, `LEFT` `CENTER` `RIGHT` |
+| `<stdlib/instruments>` | all 128 General MIDI programs | `ACOUSTIC_GRAND_PIANO`, `VIOLIN`, `TRUMPET`, `FLUTE`, `ALTO_SAX` |
+| `<stdlib/drums>` | the GM percussion map (notes for channel 9) | `DRUM_CHANNEL`, `KICK`, `SNARE`, `HIHAT`, `CRASH`, `RIDE` |
+| `<stdlib/notes>` | note numbers, octaves 0..8 | `C4` (middle C, 60), `A4` (440 Hz, 69) — sharps use `S`: `CS4` is C#4 |
+| `<stdlib/scales>` | scale intervals in semitones | `MINOR_THIRD`, `PERFECT_FIFTH`, `OCTAVE`, `WHOLE_STEP` |
+| `<stdlib/chords>` | chord-tone intervals (includes scales) | `DOMINANT_SEVENTH`, `MAJOR_NINTH`, `FLAT_FIFTH` |
+
+```c
+#include "<stdlib/instruments>"
+#include "<stdlib/notes>"
+#include "<stdlib/audio>"
+
+track lead = init_track(0);
+
+void main() {
+    set_instrument(lead, FLUTE);
+    play(lead, C4, QUARTER);                  // middle C, one beat
+    play(lead, C4 + 12, HALF);                // an octave up, two beats
+}
+```
+
+The libraries are plain MipASM files — open them to see every name. The
+compiler looks for them next to its own executable (`lib/` in a development
+checkout, `share/mipasm/lib/` when installed); set `MIPASM_LIB_PATH` to use a
+library directory somewhere else.
 
 ## 3. Values and types
 
