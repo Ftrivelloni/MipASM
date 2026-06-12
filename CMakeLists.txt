@@ -1,9 +1,13 @@
-# Minimum required version fo CMake. Can be modified at your own risk.
+# Minimum required version of CMake. Can be modified at your own risk.
 # @see https://cmake.org/download/
 cmake_minimum_required(VERSION 3.25)
 
-# Name of the project and language to use (C, in this case).
-project(Flex-Bison-Compiler C)
+# Name and version of the project, and language to use (C, in this case).
+project(MipASM VERSION 2.0.0 LANGUAGES C)
+
+# AddressSanitizer is for development builds; switch it off for installable
+# release binaries: cmake -DMIPASM_SANITIZE=OFF ...
+option(MIPASM_SANITIZE "Build with AddressSanitizer (development builds)" ON)
 
 # Selects the best strategy according to the available compiler in the system.
 # @see https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html
@@ -12,27 +16,29 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 
 	# Compiles the parser with Bison, generating counter-examples in case S/R or R/R conflicts exists.
 	add_custom_command(
-		OUTPUT ../src/main/c/frontend/syntactic-analysis/BisonParser.c ../src/main/c/frontend/syntactic-analysis/BisonParser.h
-		COMMAND ../src/main/bash/bison.sh
+		OUTPUT ${CMAKE_SOURCE_DIR}/src/main/c/frontend/syntactic-analysis/BisonParser.c ${CMAKE_SOURCE_DIR}/src/main/c/frontend/syntactic-analysis/BisonParser.h
+		COMMAND ${CMAKE_SOURCE_DIR}/src/main/bash/bison.sh
 	)
 
 	# Options for GCC.
-	add_compile_options(-fsanitize=address)
+	if (MIPASM_SANITIZE)
+		add_compile_options(-fsanitize=address)
+		add_link_options(-fsanitize=address)
+	endif ()
 	add_compile_options(-O3)
 	add_compile_options(-static-libgcc)
 	add_compile_options(-std=gnu99)
-	add_link_options(-fsanitize=address)
 
 	# Compiles the scanner with Flex.
 	add_custom_command(
-		OUTPUT ../src/main/c/frontend/lexical-analysis/FlexScanner.c ../src/main/c/frontend/lexical-analysis/FlexScanner.h
-		COMMAND ../src/main/bash/flex.sh
-		DEPENDS ../src/main/c/frontend/syntactic-analysis/BisonParser.c ../src/main/c/frontend/syntactic-analysis/BisonParser.h
+		OUTPUT ${CMAKE_SOURCE_DIR}/src/main/c/frontend/lexical-analysis/FlexScanner.c ${CMAKE_SOURCE_DIR}/src/main/c/frontend/lexical-analysis/FlexScanner.h
+		COMMAND ${CMAKE_SOURCE_DIR}/src/main/bash/flex.sh
+		DEPENDS ${CMAKE_SOURCE_DIR}/src/main/c/frontend/syntactic-analysis/BisonParser.c ${CMAKE_SOURCE_DIR}/src/main/c/frontend/syntactic-analysis/BisonParser.h
 	)
 
 	# Defines the entry-point of the application, and the source-codes (*.c extension).
 	# The header files (*.h extension), are automatically included from the source-codes.
-	add_executable(Flex-Bison-Compiler
+	add_executable(mipasm
 		src/main/c/backend/code-generation/Generator.c
 		src/main/c/backend/code-generation/MidiEmitter.c
 		src/main/c/backend/semantic-analysis/SemanticAnalyzer.c
@@ -50,8 +56,13 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 		# ...
 	)
 
-	# Link final project and libraries.
-	target_link_libraries(Flex-Bison-Compiler)
+	# The version reported by "mipasm --version".
+	target_compile_definitions(mipasm PRIVATE MIPASM_VERSION="${PROJECT_VERSION}")
+
+	# Installs the compiler into the standard binary directory, so that
+	# "cmake --install <builddir>" makes the "mipasm" command available.
+	include(GNUInstallDirs)
+	install(TARGETS mipasm RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 else ()
 	message(NOTICE "The C compiler is unknown.")
 endif ()

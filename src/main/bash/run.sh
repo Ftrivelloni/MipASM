@@ -2,12 +2,9 @@
 
 set -euo pipefail
 
-BASE_PATH="$(dirname "$0")/../../.."
-cd "$BASE_PATH"
-
-# Usage: run.sh <input.mip> [-o <output.mid>] [extra compiler args]
-# The input program is passed as a file argument (C-compiler style); any
-# remaining arguments (e.g. "-o song.mid") are forwarded as-is.
-INPUT="$1"
-shift 1
-".build/Flex-Bison-Compiler" "$INPUT" "$@"
+# Runs the development build of the compiler without installing it. All
+# arguments are forwarded as-is, and the current working directory is
+# preserved so relative paths behave like any other compiler:
+#
+#   run.sh <input.mip> [-o <output.mid>] [other mipasm options]
+exec "$(dirname "$0")/../../../.build/mipasm" "$@"
