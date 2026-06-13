@@ -16,6 +16,8 @@ rm --force "src/main/c/frontend/syntactic-analysis/BisonParser.h"
 
 cmake -S . -B .build
 echo -e "${GREEN}CMake done.${OFF}"
-cmake --build .build
+cd .build
+make
+cd ..
 
 echo -e "${GREEN}All done.${OFF}"

@@ -1,5 +1,3 @@
-[![✗](https://img.shields.io/badge/Release-v2.0.0-ffb600.svg?style=for-the-badge)](https://github.com/Ftrivelloni/MipASM)
-
 [![✗](https://github.com/Ftrivelloni/MipASM/actions/workflows/pipeline.yaml/badge.svg?branch=production)](https://github.com/Ftrivelloni/MipASM/actions/workflows/pipeline.yaml)
 
 <p align="center">
@@ -8,7 +6,7 @@
 
 # MipASM
 
-A C-style language whose programs compile into Standard MIDI Files, developed with Flex and Bison. The compiler builds as the `mipasm` command.
+A C-style language whose programs compile into Standard MIDI Files, developed with Flex and Bison. The compiler builds as the `mipasm` command. The language is documented in [`doc`](doc).
 
 * [Requirements](#requirements)
 * [Configuration](#configuration)
@@ -60,7 +58,12 @@ src/main/bash/run.sh <program>
 
 where `<program>` is the path to a `.mip` source file. The MIDI output lands
 next to the input (`song.mip` → `song.mid`); pass `-o <file>` to choose
-another path, and see `run.sh --help` for the full option list.
+another path, and see `run.sh --help` for the full option list. For example,
+compile one of the bundled programs:
+
+```bash
+src/main/bash/run.sh examples/ode-to-joy.mip
+```
 
 ### Install
 
