@@ -1,0 +1,69 @@
+// <stdlib/drums> — the General MIDI percussion map.
+//
+// These are note numbers for tracks on channel 9 (the GM percussion
+// channel), where each note selects a drum sound instead of a pitch:
+//     track kit = init_track(DRUM_CHANNEL);
+//     play(kit, KICK, QUARTER);
+
+const int DRUM_CHANNEL = 9;
+
+// Full GM percussion map (notes 35..81).
+const int ACOUSTIC_BASS_DRUM = 35;
+const int BASS_DRUM_1 = 36;
+const int SIDE_STICK = 37;
+const int ACOUSTIC_SNARE = 38;
+const int HAND_CLAP = 39;
+const int ELECTRIC_SNARE = 40;
+const int LOW_FLOOR_TOM = 41;
+const int CLOSED_HI_HAT = 42;
+const int HIGH_FLOOR_TOM = 43;
+const int PEDAL_HI_HAT = 44;
+const int LOW_TOM = 45;
+const int OPEN_HI_HAT = 46;
+const int LOW_MID_TOM = 47;
+const int HI_MID_TOM = 48;
+const int CRASH_CYMBAL_1 = 49;
+const int HIGH_TOM = 50;
+const int RIDE_CYMBAL_1 = 51;
+const int CHINESE_CYMBAL = 52;
+const int RIDE_BELL = 53;
+const int TAMBOURINE = 54;
+const int SPLASH_CYMBAL = 55;
+const int COWBELL = 56;
+const int CRASH_CYMBAL_2 = 57;
+const int VIBRASLAP = 58;
+const int RIDE_CYMBAL_2 = 59;
+const int HI_BONGO = 60;
+const int LOW_BONGO = 61;
+const int MUTE_HI_CONGA = 62;
+const int OPEN_HI_CONGA = 63;
+const int LOW_CONGA = 64;
+const int HIGH_TIMBALE = 65;
+const int LOW_TIMBALE = 66;
+const int HIGH_AGOGO = 67;
+const int LOW_AGOGO = 68;
+const int CABASA = 69;
+const int MARACAS = 70;
+const int SHORT_WHISTLE = 71;
+const int LONG_WHISTLE = 72;
+const int SHORT_GUIRO = 73;
+const int LONG_GUIRO = 74;
+const int CLAVES = 75;
+const int HI_WOOD_BLOCK = 76;
+const int LOW_WOOD_BLOCK = 77;
+const int MUTE_CUICA = 78;
+const int OPEN_CUICA = 79;
+const int MUTE_TRIANGLE = 80;
+const int OPEN_TRIANGLE = 81;
+
+// Friendly aliases for the common kit pieces.
+const int KICK = 36;
+const int SNARE = 38;
+const int CLAP = 39;
+const int HIHAT = 42;
+const int OPEN_HAT = 46;
+const int CRASH = 49;
+const int RIDE = 51;
+const int TOM_LOW = 45;
+const int TOM_MID = 47;
+const int TOM_HIGH = 50;

@@ -1,0 +1,19 @@
+// <stdlib/chords> — chord-tone intervals, in semitones.
+//
+// Builds on <stdlib/scales>: stack intervals over a root inside a sync
+// block to play a chord:
+//     sync {
+//         play(piano, root, HALF);
+//         play(piano, root + MAJOR_THIRD, HALF);
+//         play(piano, root + PERFECT_FIFTH, HALF);
+//     }
+#include "<stdlib/scales>"
+
+const int FLAT_FIFTH = 6;
+const int SHARP_FIFTH = 8;
+const int DIMINISHED_SEVENTH = 9;
+const int DOMINANT_SEVENTH = 10;
+const int MINOR_NINTH = 13;
+const int MAJOR_NINTH = 14;
+const int ELEVENTH = 17;
+const int THIRTEENTH = 21;

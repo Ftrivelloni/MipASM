@@ -284,11 +284,17 @@ static void _analyzeNode(AnalyzerContext * context, ASTNode * node) {
 	switch (node->nodeType) {
 		case AST_PROGRAM:
 			_pushScope(context);
+			_analyzeList(context, node->data.program.includes);
 			_analyzeList(context, node->data.program.globalDecls);
 			_analyzeNode(context, node->data.program.mainFunc);
 			_popScope(context);
 			break;
 		case AST_INCLUDE:
+			/* Well-formed includes are consumed by the lexer and never reach
+			   the AST; one that did (e.g. split by a block comment) loaded
+			   nothing, which must not pass silently. */
+			_reportError(context, "Malformed #include directive \"%s\" loads no library.",
+				node->data.include.path == NULL ? "" : node->data.include.path);
 			break;
 		case AST_MAIN_FUNC:
 			_analyzeNode(context, node->data.mainFunc.body);
@@ -327,6 +333,25 @@ static void _analyzeNode(AnalyzerContext * context, ASTNode * node) {
 			_requireTrack(context, node->data.ccStmt.trackName);
 			if (!_isNumeric(_analyzeExpression(context, node->data.ccStmt.value))) {
 				_reportError(context, "%s value must be numeric.", ccKindName(node->data.ccStmt.kind));
+			}
+			break;
+		case AST_TEMPO_STMT:
+			if (!_isNumeric(_analyzeExpression(context, node->data.tempoStmt.bpm))) {
+				_reportError(context, "set_tempo value must be numeric.");
+			}
+			break;
+		case AST_TIME_SIGNATURE_STMT:
+			if (_analyzeExpression(context, node->data.timeSignatureStmt.numerator) != EXPR_INT) {
+				_reportError(context, "set_time_signature numerator must be int.");
+			}
+			if (_analyzeExpression(context, node->data.timeSignatureStmt.denominator) != EXPR_INT) {
+				_reportError(context, "set_time_signature denominator must be int.");
+			}
+			break;
+		case AST_INSTRUMENT_STMT:
+			_requireTrack(context, node->data.instrumentStmt.trackName);
+			if (!_isNumeric(_analyzeExpression(context, node->data.instrumentStmt.program))) {
+				_reportError(context, "set_instrument program must be numeric.");
 			}
 			break;
 		case AST_IF:

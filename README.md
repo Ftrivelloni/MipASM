@@ -1,14 +1,12 @@
-[![✗](https://img.shields.io/badge/Release-v2.0.0-ffb600.svg?style=for-the-badge)](https://github.com/Ftrivelloni/MipASM)
-
 [![✗](https://github.com/Ftrivelloni/MipASM/actions/workflows/pipeline.yaml/badge.svg?branch=production)](https://github.com/Ftrivelloni/MipASM/actions/workflows/pipeline.yaml)
 
 <p align="center">
 	<img src="MipASM.png" alt="MipASM logo" />
 </p>
 
-# Flex-Bison-Compiler
+# MipASM
 
-A base compiler example, developed with Flex and Bison.
+A C-style language whose programs compile into Standard MIDI Files, developed with Flex and Bison. The compiler builds as the `mipasm` command. The language is documented in [`doc`](doc).
 
 * [Requirements](#requirements)
 * [Configuration](#configuration)
@@ -52,13 +50,32 @@ src/main/bash/build.sh
 
 ### Run
 
-Compiles a program:
+Compiles a program with the development build (no installation needed):
 
 ```bash
 src/main/bash/run.sh <program>
 ```
 
-where `<program>` is the path to the file that represents its entry-point.
+where `<program>` is the path to a `.mip` source file. The MIDI output lands
+next to the input (`song.mip` → `song.mid`); pass `-o <file>` to choose
+another path, and see `run.sh --help` for the full option list. For example,
+compile one of the bundled programs:
+
+```bash
+src/main/bash/run.sh examples/ode-to-joy.mip
+```
+
+### Install
+
+Builds a release binary (without AddressSanitizer) and installs the `mipasm`
+command into the system binary directory, so it can be invoked from anywhere:
+
+```bash
+cmake -S . -B .build-release -DMIPASM_SANITIZE=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build .build-release
+sudo cmake --install .build-release
+mipasm <program>
+```
 
 ### Test
 

@@ -25,6 +25,7 @@ extern CompilationStatus LeaveMultilineCommentLexemeAction();
 extern CompilationStatus IgnoredLexemeAction();
 extern CompilationStatus EOFLexemeAction();
 extern CompilationStatus UnknownLexemeAction();
+extern CompilationStatus IncludeDirectiveLexemeAction();
 
 %}
 
@@ -45,7 +46,11 @@ line_comment    "//"[^\n]*
 {line_comment}              { return IgnoredLexemeAction(); }
 {whitespace}                { return IgnoredLexemeAction(); }
 
-	/* Preprocessor directive. */
+	/* Preprocessor directive. A well-formed include is consumed entirely
+	   here: the library file's tokens are spliced in through the buffer
+	   stack and no token reaches the parser. The bare keyword below only
+	   fires for malformed directives, which then fail at parse time. */
+"#include"[[:space:]]*\"<[a-zA-Z0-9_./]+>\"   { return IncludeDirectiveLexemeAction(); }
 "#include"                  { return KeywordLexemeAction(INCLUDE); }
 
 	/* Type keywords. */
@@ -72,6 +77,12 @@ line_comment    "//"[^\n]*
 "set_volume"                { return KeywordLexemeAction(SET_VOLUME); }
 "set_pan"                   { return KeywordLexemeAction(SET_PAN); }
 "set_attack"                { return KeywordLexemeAction(SET_ATTACK); }
+"set_sustain"               { return KeywordLexemeAction(SET_SUSTAIN); }
+"set_modulation"            { return KeywordLexemeAction(SET_MODULATION); }
+"set_reverb"                { return KeywordLexemeAction(SET_REVERB); }
+"set_tempo"                 { return KeywordLexemeAction(SET_TEMPO); }
+"set_instrument"            { return KeywordLexemeAction(SET_INSTRUMENT); }
+"set_time_signature"        { return KeywordLexemeAction(SET_TIME_SIGNATURE); }
 
 	/* Multi-character operators (must precede the single-char variants). */
 "=="                        { return OperatorLexemeAction(EQ); }

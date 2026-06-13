@@ -1,12 +1,12 @@
 #include "<stdlib/audio>"
 
-const int tempo = 150;
 int velocity = 100;
 
 track lead = init_track(0);
 track bass = init_track(1);
 
 void main() {
+    set_tempo(150);
     set_volume(lead, 110);
     set_volume(bass, 90);
     set_pan(lead, 54);

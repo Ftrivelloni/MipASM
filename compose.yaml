@@ -39,5 +39,5 @@ services:
     pull_policy: "every_7d"
     user: "ubuntu:ubuntu"
     volumes:
-      - ".:/home/ubuntu/Flex-Bison-Compiler"
-    working_dir: "/home/ubuntu/Flex-Bison-Compiler"
+      - ".:/home/ubuntu/MipASM"
+    working_dir: "/home/ubuntu/MipASM"

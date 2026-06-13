@@ -99,6 +99,17 @@ void destroyASTNode(ASTNode * node) {
 			free(node->data.ccStmt.trackName);
 			destroyASTNode(node->data.ccStmt.value);
 			break;
+		case AST_TEMPO_STMT:
+			destroyASTNode(node->data.tempoStmt.bpm);
+			break;
+		case AST_TIME_SIGNATURE_STMT:
+			destroyASTNode(node->data.timeSignatureStmt.numerator);
+			destroyASTNode(node->data.timeSignatureStmt.denominator);
+			break;
+		case AST_INSTRUMENT_STMT:
+			free(node->data.instrumentStmt.trackName);
+			destroyASTNode(node->data.instrumentStmt.program);
+			break;
 		case AST_IF:
 			destroyASTNode(node->data.ifStmt.condition);
 			destroyASTNode(node->data.ifStmt.thenBlock);
@@ -167,9 +178,12 @@ const char * operatorKindName(OperatorKind op) {
 
 const char * ccKindName(CCKind kind) {
 	switch (kind) {
-		case CC_VOLUME: return "set_volume";
-		case CC_PAN:    return "set_pan";
-		case CC_ATTACK: return "set_attack";
+		case CC_VOLUME:     return "set_volume";
+		case CC_PAN:        return "set_pan";
+		case CC_ATTACK:     return "set_attack";
+		case CC_SUSTAIN:    return "set_sustain";
+		case CC_MODULATION: return "set_modulation";
+		case CC_REVERB:     return "set_reverb";
 		default: return "?";
 	}
 }
@@ -187,6 +201,9 @@ const char * nodeTypeName(NodeType type) {
 		case AST_REST:        return "Rest";
 		case AST_SYNC_BLOCK:  return "SyncBlock";
 		case AST_CC_STMT:     return "CC";
+		case AST_TEMPO_STMT:  return "Tempo";
+		case AST_TIME_SIGNATURE_STMT: return "TimeSignature";
+		case AST_INSTRUMENT_STMT:     return "Instrument";
 		case AST_IF:          return "If";
 		case AST_FOR:         return "For";
 		case AST_WHILE:       return "While";

@@ -432,9 +432,6 @@ static void _executeDeclaration(InterpreterContext * context, ASTNode * node) {
 		}
 	}
 	_declareRuntimeSymbol(context, node->data.declaration.name, node->data.declaration.isConst, value);
-	if (strcmp(node->data.declaration.name, "tempo") == 0 && value.initialized && _isNumericValue(value)) {
-		musicProgramSetTempo(context->program, (int) _asNumber(value));
-	}
 }
 
 static void _executeTrackInit(InterpreterContext * context, ASTNode * node) {
@@ -489,6 +486,9 @@ static void _executeCC(InterpreterContext * context, ASTNode * node) {
 	switch (node->data.ccStmt.kind) {
 		case CC_PAN: ccKind = MIDI_CC_PAN; break;
 		case CC_ATTACK: ccKind = MIDI_CC_ATTACK; break;
+		case CC_SUSTAIN: ccKind = MIDI_CC_SUSTAIN; break;
+		case CC_MODULATION: ccKind = MIDI_CC_MODULATION; break;
+		case CC_REVERB: ccKind = MIDI_CC_REVERB; break;
 		default: ccKind = MIDI_CC_VOLUME; break;
 	}
 	double ccFloat = _asNumber(value);
@@ -496,6 +496,51 @@ static void _executeCC(InterpreterContext * context, ASTNode * node) {
 	int ccInt = (int) (ccFloat >= 0 ? ccFloat + 0.5 : ccFloat - 0.5);
 	musicProgramAddCC(context->program, context->currentTime, track->channel, track->name,
 		ccKind, ccInt, wasFloat, ccFloat);
+}
+
+static void _executeTempo(InterpreterContext * context, ASTNode * node) {
+	RuntimeValue value = _requireInitialized(context, "set_tempo value", _evaluateExpression(context, node->data.tempoStmt.bpm));
+	if (!value.initialized || !_isNumericValue(value)) {
+		_reportGenerationError(context, "set_tempo arguments cannot be evaluated.");
+		return;
+	}
+	int bpm = (int) _asNumber(value);
+	if (bpm <= 0) {
+		_reportGenerationError(context, "set_tempo requires a positive BPM, got %d.", bpm);
+		return;
+	}
+	musicProgramAddTempo(context->program, context->currentTime, bpm);
+}
+
+static void _executeTimeSignature(InterpreterContext * context, ASTNode * node) {
+	RuntimeValue numerator = _requireInitialized(context, "set_time_signature numerator", _evaluateExpression(context, node->data.timeSignatureStmt.numerator));
+	RuntimeValue denominator = _requireInitialized(context, "set_time_signature denominator", _evaluateExpression(context, node->data.timeSignatureStmt.denominator));
+	if (!numerator.initialized || !denominator.initialized || !_isNumericValue(numerator) || !_isNumericValue(denominator)) {
+		_reportGenerationError(context, "set_time_signature arguments cannot be evaluated.");
+		return;
+	}
+	int num = (int) _asNumber(numerator);
+	int den = (int) _asNumber(denominator);
+	if (num < 1 || num > 255) {
+		_reportGenerationError(context, "set_time_signature numerator must be in 1..255, got %d.", num);
+		return;
+	}
+	if (den < 1 || den > 32 || (den & (den - 1)) != 0) {
+		_reportGenerationError(context, "set_time_signature denominator must be a power of two in 1..32, got %d.", den);
+		return;
+	}
+	musicProgramAddTimeSignature(context->program, context->currentTime, num, den);
+}
+
+static void _executeInstrument(InterpreterContext * context, ASTNode * node) {
+	TrackValue * track = _findTrack(context, node->data.instrumentStmt.trackName);
+	RuntimeValue program = _requireInitialized(context, "set_instrument program", _evaluateExpression(context, node->data.instrumentStmt.program));
+	if (track == NULL || !program.initialized || !_isNumericValue(program)) {
+		_reportGenerationError(context, "set_instrument arguments cannot be evaluated.");
+		return;
+	}
+	musicProgramAddProgramChange(context->program, context->currentTime, track->channel,
+		track->name, (int) _asNumber(program));
 }
 
 static void _executeFor(InterpreterContext * context, ASTNode * node) {
@@ -598,6 +643,15 @@ static void _executeNode(InterpreterContext * context, ASTNode * node) {
 			break;
 		case AST_CC_STMT:
 			_executeCC(context, node);
+			break;
+		case AST_TEMPO_STMT:
+			_executeTempo(context, node);
+			break;
+		case AST_TIME_SIGNATURE_STMT:
+			_executeTimeSignature(context, node);
+			break;
+		case AST_INSTRUMENT_STMT:
+			_executeInstrument(context, node);
 			break;
 		case AST_IF:
 			if (_conditionIsTrue(context, node->data.ifStmt.condition, "if condition")) {
@@ -733,6 +787,27 @@ static void _printNode(ASTNode * node, unsigned int level) {
 			_printIndent(level + 1);
 			printf("value:\n");
 			_printNode(node->data.ccStmt.value, level + 2);
+			break;
+		case AST_TEMPO_STMT:
+			printf("\n");
+			_printIndent(level + 1);
+			printf("bpm:\n");
+			_printNode(node->data.tempoStmt.bpm, level + 2);
+			break;
+		case AST_TIME_SIGNATURE_STMT:
+			printf("\n");
+			_printIndent(level + 1);
+			printf("numerator:\n");
+			_printNode(node->data.timeSignatureStmt.numerator, level + 2);
+			_printIndent(level + 1);
+			printf("denominator:\n");
+			_printNode(node->data.timeSignatureStmt.denominator, level + 2);
+			break;
+		case AST_INSTRUMENT_STMT:
+			printf(" %s\n", node->data.instrumentStmt.trackName ? node->data.instrumentStmt.trackName : "?");
+			_printIndent(level + 1);
+			printf("program:\n");
+			_printNode(node->data.instrumentStmt.program, level + 2);
 			break;
 		case AST_IF:
 			printf("\n");

@@ -20,7 +20,8 @@ typedef struct {
 
 	/**
 	 * Path of the Standard MIDI File the code generator writes. Set from the
-	 * command line (the `-o` flag); defaults to "output.mid".
+	 * command line (the `-o` flag); defaults to the input path with its
+	 * ".mip" suffix replaced by ".mid" ("a.mid" for standard input).
 	 */
 	const char * midiOutputPath;
 	

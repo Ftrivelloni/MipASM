@@ -10,4 +10,4 @@ cd "$BASE_PATH"
 # remaining arguments (e.g. "-o song.mid") are forwarded as-is.
 INPUT="$1"
 shift 1
-".build/Flex-Bison-Compiler" "$INPUT" "$@"
+".build/mipasm" "$INPUT" "$@"

@@ -1,0 +1,12 @@
+track melody = init_track(0);
+
+void main() {
+    set_tempo(120);
+    play(melody, 60, 1.0);
+    set_tempo(90);
+    play(melody, 62, 1.0);
+    for (int i = 0; i < 4; i = i + 1) {
+        set_tempo(100 + i * 10);
+        play(melody, 64 + i, 0.5);
+    }
+}

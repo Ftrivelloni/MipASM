@@ -9,7 +9,7 @@ static Logger * _logger = NULL;
 
 /* MIDI constants. */
 #define MIDI_PPQ 480				/* ticks per quarter note (the SMF division) */
-#define MIDI_DEFAULT_TEMPO_BPM 120	/* forgot to put global tempo variable apparently, temporary fix     */
+#define MIDI_DEFAULT_TEMPO_BPM 120	/* used when the program never calls set_tempo */
 #define MICROSECONDS_PER_MINUTE 60000000UL
 
 /** Shutdown module's internal state. */
@@ -31,25 +31,15 @@ ModuleDestructor initializeMidiEmitterModule(void) {
 /* BUILDER API */
 
 MusicProgram * createMusicProgram(void) {
-	MusicProgram * program = (MusicProgram *) calloc(1, sizeof(MusicProgram));
-	program->tempoBPM = MIDI_DEFAULT_TEMPO_BPM;
-	return program;
-}
-
-void musicProgramSetTempo(MusicProgram * program, int bpm) {
-	if (program == NULL) {
-		return;
-	}
-	if (bpm > 0) {
-		program->tempoBPM = bpm;
-	} else {
-		logWarning(_logger, "Ignoring non-positive tempo %d; keeping %d BPM.", bpm, program->tempoBPM);
-	}
+	return (MusicProgram *) calloc(1, sizeof(MusicProgram));
 }
 
 /** Allocates a zeroed event of the given kind and appends it to the program. */
 static MusicEvent * _appendEvent(MusicProgram * program, MusicEventKind kind) {
 	MusicEvent * event = (MusicEvent *) calloc(1, sizeof(MusicEvent));
+	if (event == NULL) {
+		return NULL;
+	}
 	event->kind = kind;
 	if (program->eventsTail == NULL) {
 		program->eventsHead = event;
@@ -66,10 +56,16 @@ void musicProgramAddTrack(MusicProgram * program, const char * name, int channel
 		return;
 	}
 	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_TRACK_INIT);
+	if (event == NULL) {
+		return;
+	}
 	event->trackName = name;
 	event->channel = channel;
 
 	MidiTrackInfo * info = (MidiTrackInfo *) calloc(1, sizeof(MidiTrackInfo));
+	if (info == NULL) {
+		return;			/* the event is already linked and freed by destroyMusicProgram */
+	}
 	info->name = name;
 	info->channel = channel;
 	if (program->tracksTail == NULL) {
@@ -87,6 +83,9 @@ void musicProgramAddNote(MusicProgram * program, double beat, int channel, const
 		return;
 	}
 	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_NOTE);
+	if (event == NULL) {
+		return;
+	}
 	event->beat = beat;
 	event->channel = channel;
 	event->trackName = track;
@@ -100,6 +99,9 @@ void musicProgramAddRest(MusicProgram * program, double beat, const char * track
 		return;
 	}
 	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_REST);
+	if (event == NULL) {
+		return;
+	}
 	event->beat = beat;
 	event->trackName = track;
 	event->durationBeats = durationBeats;
@@ -110,6 +112,9 @@ void musicProgramAddCC(MusicProgram * program, double beat, int channel, const c
 		return;
 	}
 	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_CC);
+	if (event == NULL) {
+		return;
+	}
 	event->beat = beat;
 	event->channel = channel;
 	event->trackName = track;
@@ -117,6 +122,45 @@ void musicProgramAddCC(MusicProgram * program, double beat, int channel, const c
 	event->ccValue = value;
 	event->ccValueWasFloat = wasFloat;
 	event->ccValueFloat = floatValue;
+}
+
+void musicProgramAddTempo(MusicProgram * program, double beat, int bpm) {
+	if (program == NULL) {
+		return;
+	}
+	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_TEMPO);
+	if (event == NULL) {
+		return;
+	}
+	event->beat = beat;
+	event->tempoBPM = bpm;	/* trackName stays NULL: conductor-track event */
+}
+
+void musicProgramAddTimeSignature(MusicProgram * program, double beat, int numerator, int denominator) {
+	if (program == NULL) {
+		return;
+	}
+	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_TIME_SIGNATURE);
+	if (event == NULL) {
+		return;
+	}
+	event->beat = beat;
+	event->tsNumerator = numerator;	/* trackName stays NULL: conductor-track event */
+	event->tsDenominator = denominator;
+}
+
+void musicProgramAddProgramChange(MusicProgram * program, double beat, int channel, const char * track, int programNumber) {
+	if (program == NULL) {
+		return;
+	}
+	MusicEvent * event = _appendEvent(program, MUSIC_EVENT_PROGRAM_CHANGE);
+	if (event == NULL) {
+		return;
+	}
+	event->beat = beat;
+	event->channel = channel;
+	event->trackName = track;
+	event->programNumber = programNumber;
 }
 
 void destroyMusicProgram(MusicProgram * program) {
@@ -144,6 +188,9 @@ static const char * _ccLabel(MidiCCKind kind) {
 	switch (kind) {
 		case MIDI_CC_PAN: return "pan";
 		case MIDI_CC_ATTACK: return "attack";
+		case MIDI_CC_SUSTAIN: return "sustain";
+		case MIDI_CC_MODULATION: return "modulation";
+		case MIDI_CC_REVERB: return "reverb";
 		case MIDI_CC_VOLUME:
 		default: return "volume";
 	}
@@ -176,6 +223,17 @@ void printMusicProgram(const MusicProgram * program) {
 						event->beat, event->trackName, _ccLabel(event->ccKind), event->ccValue);
 				}
 				break;
+			case MUSIC_EVENT_TEMPO:
+				printf("t=%.3f tempo %d\n", event->beat, event->tempoBPM);
+				break;
+			case MUSIC_EVENT_TIME_SIGNATURE:
+				printf("t=%.3f time_signature %d/%d\n",
+					event->beat, event->tsNumerator, event->tsDenominator);
+				break;
+			case MUSIC_EVENT_PROGRAM_CHANGE:
+				printf("t=%.3f program %s value=%d\n",
+					event->beat, event->trackName, event->programNumber);
+				break;
 		}
 	}
 }
@@ -202,6 +260,9 @@ static unsigned char _controllerNumber(MidiCCKind kind) {
 		case MIDI_CC_VOLUME: return 7;
 		case MIDI_CC_PAN: return 10;
 		case MIDI_CC_ATTACK: return 73;
+		case MIDI_CC_SUSTAIN: return 64;
+		case MIDI_CC_MODULATION: return 1;
+		case MIDI_CC_REVERB: return 91;
 		default: return 7;
 	}
 }
@@ -287,11 +348,12 @@ static void _bufferFree(ByteBuffer * buffer) {
 
 typedef struct {
 	long tick;
-	int order;					/* 0 = note-off / CC, 1 = note-on (off sorts first at equal tick) */
+	int order;					/* 0 = note-off / CC / program change, 1 = note-on (off sorts first at equal tick) */
 	unsigned long seq;			/* insertion index: stable tie-break for qsort */
 	unsigned char status;
 	unsigned char data1;
 	unsigned char data2;
+	int dataLength;				/* data bytes after status: 2 (notes, CC) or 1 (program change) */
 } RawMidiEvent;
 
 static int _compareRawEvents(const void * left, const void * right) {
@@ -309,21 +371,143 @@ static int _compareRawEvents(const void * left, const void * right) {
 	return 0;
 }
 
-/** Write the conductor track: a single tempo meta event plus End-of-Track. */
-static void _writeConductorChunk(FILE * file, int tempoBPM) {
-	int bpm = tempoBPM > 0 ? tempoBPM : MIDI_DEFAULT_TEMPO_BPM;
+/** Append a Track Name meta event (delta 0, FF 03, length, name bytes). */
+static void _bufferPutTrackName(ByteBuffer * buffer, const char * name) {
+	if (name == NULL) {
+		return;
+	}
+	size_t length = strlen(name);
+	_bufferPutVLQ(buffer, 0);
+	_bufferPutU8(buffer, 0xFF);
+	_bufferPutU8(buffer, 0x03);
+	_bufferPutVLQ(buffer, (unsigned long) length);
+	for (size_t i = 0; i < length; ++i) {
+		_bufferPutU8(buffer, (unsigned int) (unsigned char) name[i]);
+	}
+}
+
+/** Append a tempo meta event (FF 51 03 + 24-bit microseconds per quarter note). */
+static void _bufferPutTempo(ByteBuffer * buffer, int bpm) {
 	unsigned long microsecondsPerQuarter = MICROSECONDS_PER_MINUTE / (unsigned long) bpm;
+	_bufferPutU8(buffer, 0xFF);
+	_bufferPutU8(buffer, 0x51);
+	_bufferPutU8(buffer, 0x03);
+	_bufferPutU8(buffer, (unsigned int) ((microsecondsPerQuarter >> 16) & 0xFF));
+	_bufferPutU8(buffer, (unsigned int) ((microsecondsPerQuarter >> 8) & 0xFF));
+	_bufferPutU8(buffer, (unsigned int) (microsecondsPerQuarter & 0xFF));
+}
+
+/* A conductor-track meta event (tempo or time signature) with an absolute
+ * tick. Like RawMidiEvent, `seq` keeps the sort stable. */
+
+typedef struct {
+	long tick;
+	unsigned long seq;
+	MusicEventKind kind;
+	int a;						/* tempo BPM, or time-signature numerator   */
+	int b;						/* time-signature denominator (unused for tempo) */
+} ConductorEvent;
+
+static int _compareConductorEvents(const void * left, const void * right) {
+	const ConductorEvent * x = (const ConductorEvent *) left;
+	const ConductorEvent * y = (const ConductorEvent *) right;
+	if (x->tick != y->tick) {
+		return x->tick < y->tick ? -1 : 1;
+	}
+	if (x->seq != y->seq) {
+		return x->seq < y->seq ? -1 : 1;
+	}
+	return 0;
+}
+
+/** log2 of a power of two in 1..32 (validated by the generator). */
+static unsigned char _denominatorPower(int denominator) {
+	unsigned char power = 0;
+	while (denominator > 1) {
+		denominator >>= 1;
+		power++;
+	}
+	return power;
+}
+
+/**
+ * Write the conductor track: every tempo / time-signature event sorted by
+ * tick and delta-encoded, plus End-of-Track. If the program never sets a
+ * tempo at tick 0, a default 120 BPM event is emitted first so playback
+ * timing is explicit.
+ */
+static bool _writeConductorChunk(FILE * file, const MusicProgram * program) {
+	size_t count = 0;
+	for (MusicEvent * event = program->eventsHead; event != NULL; event = event->next) {
+		if (event->kind == MUSIC_EVENT_TEMPO || event->kind == MUSIC_EVENT_TIME_SIGNATURE) {
+			count++;
+		}
+	}
+
+	ConductorEvent * events = NULL;
+	if (count > 0) {
+		events = (ConductorEvent *) calloc(count, sizeof(ConductorEvent));
+		if (events == NULL) {
+			logError(_logger, "Cannot allocate %zu conductor event(s).", count);
+			return false;
+		}
+	}
+
+	size_t index = 0;
+	unsigned long sequence = 0;
+	bool hasInitialTempo = false;
+	for (MusicEvent * event = program->eventsHead; event != NULL; event = event->next) {
+		if (event->kind != MUSIC_EVENT_TEMPO && event->kind != MUSIC_EVENT_TIME_SIGNATURE) {
+			continue;
+		}
+		events[index].tick = _beatToTick(event->beat);
+		events[index].seq = sequence++;
+		events[index].kind = event->kind;
+		if (event->kind == MUSIC_EVENT_TEMPO) {
+			events[index].a = event->tempoBPM;
+			if (events[index].tick == 0) {
+				hasInitialTempo = true;
+			}
+		} else {
+			events[index].a = event->tsNumerator;
+			events[index].b = event->tsDenominator;
+		}
+		index++;
+	}
+
+	if (count > 0) {
+		qsort(events, count, sizeof(ConductorEvent), _compareConductorEvents);
+	}
 
 	ByteBuffer body;
 	_bufferInit(&body);
-	/* delta 0, FF 51 03, then the 24-bit tempo value. */
-	_bufferPutVLQ(&body, 0);
-	_bufferPutU8(&body, 0xFF);
-	_bufferPutU8(&body, 0x51);
-	_bufferPutU8(&body, 0x03);
-	_bufferPutU8(&body, (unsigned int) ((microsecondsPerQuarter >> 16) & 0xFF));
-	_bufferPutU8(&body, (unsigned int) ((microsecondsPerQuarter >> 8) & 0xFF));
-	_bufferPutU8(&body, (unsigned int) (microsecondsPerQuarter & 0xFF));
+	_bufferPutTrackName(&body, "conductor");
+	if (!hasInitialTempo) {
+		_bufferPutVLQ(&body, 0);
+		_bufferPutTempo(&body, MIDI_DEFAULT_TEMPO_BPM);
+	}
+	long previousTick = 0;
+	for (size_t i = 0; i < count; ++i) {
+		long delta = events[i].tick - previousTick;
+		previousTick = events[i].tick;
+		if (delta < 0) {
+			delta = 0;
+		}
+		_bufferPutVLQ(&body, (unsigned long) delta);
+		if (events[i].kind == MUSIC_EVENT_TEMPO) {
+			_bufferPutTempo(&body, events[i].a);
+		} else {
+			/* FF 58 04 nn dd cc bb: cc = 24 MIDI clocks per metronome click,
+			 * bb = 8 thirty-second notes per quarter (the SMF defaults). */
+			_bufferPutU8(&body, 0xFF);
+			_bufferPutU8(&body, 0x58);
+			_bufferPutU8(&body, 0x04);
+			_bufferPutU8(&body, (unsigned int) (events[i].a & 0xFF));
+			_bufferPutU8(&body, _denominatorPower(events[i].b));
+			_bufferPutU8(&body, 0x18);
+			_bufferPutU8(&body, 0x08);
+		}
+	}
 	/* delta 0, End of Track (FF 2F 00). */
 	_bufferPutVLQ(&body, 0);
 	_bufferPutU8(&body, 0xFF);
@@ -334,6 +518,8 @@ static void _writeConductorChunk(FILE * file, int tempoBPM) {
 	_writeU32BE(file, (unsigned int) body.length);
 	fwrite(body.data, 1, body.length, file);
 	_bufferFree(&body);
+	free(events);
+	return true;
 }
 
 /** Count the raw MIDI events a single track contributes (notes = 2, CC = 1). */
@@ -345,7 +531,7 @@ static size_t _countRawEvents(const MusicProgram * program, const char * trackNa
 		}
 		if (event->kind == MUSIC_EVENT_NOTE) {
 			count += 2;
-		} else if (event->kind == MUSIC_EVENT_CC) {
+		} else if (event->kind == MUSIC_EVENT_CC || event->kind == MUSIC_EVENT_PROGRAM_CHANGE) {
 			count += 1;
 		}
 	}
@@ -393,6 +579,7 @@ static bool _writeTrackChunk(FILE * file, const MusicProgram * program, const Mi
 			raw[index].status = (unsigned char) (0x90 | channel);
 			raw[index].data1 = note;
 			raw[index].data2 = velocity;
+			raw[index].dataLength = 2;
 			index++;
 			/* note-off */
 			raw[index].tick = offTick;
@@ -401,6 +588,7 @@ static bool _writeTrackChunk(FILE * file, const MusicProgram * program, const Mi
 			raw[index].status = (unsigned char) (0x80 | channel);
 			raw[index].data1 = note;
 			raw[index].data2 = 0;
+			raw[index].dataLength = 2;
 			index++;
 		} else if (event->kind == MUSIC_EVENT_CC) {
 			if (event->ccValue < 0 || event->ccValue > 127) {
@@ -412,6 +600,18 @@ static bool _writeTrackChunk(FILE * file, const MusicProgram * program, const Mi
 			raw[index].status = (unsigned char) (0xB0 | channel);
 			raw[index].data1 = _controllerNumber(event->ccKind);
 			raw[index].data2 = _clamp7(event->ccValue);
+			raw[index].dataLength = 2;
+			index++;
+		} else if (event->kind == MUSIC_EVENT_PROGRAM_CHANGE) {
+			if (event->programNumber < 0 || event->programNumber > 127) {
+				logWarning(_logger, "Instrument program %d on '%s' out of range 0..127; clamping.", event->programNumber, track->name);
+			}
+			raw[index].tick = _beatToTick(event->beat);
+			raw[index].order = 0;	/* land before note-ons at the same tick */
+			raw[index].seq = sequence++;
+			raw[index].status = (unsigned char) (0xC0 | channel);
+			raw[index].data1 = _clamp7(event->programNumber);
+			raw[index].dataLength = 1;
 			index++;
 		}
 	}
@@ -422,6 +622,7 @@ static bool _writeTrackChunk(FILE * file, const MusicProgram * program, const Mi
 
 	ByteBuffer body;
 	_bufferInit(&body);
+	_bufferPutTrackName(&body, track->name);
 	long previousTick = 0;
 	for (size_t i = 0; i < rawCount; ++i) {
 		long delta = raw[i].tick - previousTick;
@@ -432,7 +633,9 @@ static bool _writeTrackChunk(FILE * file, const MusicProgram * program, const Mi
 		_bufferPutVLQ(&body, (unsigned long) delta);
 		_bufferPutU8(&body, raw[i].status);
 		_bufferPutU8(&body, raw[i].data1);
-		_bufferPutU8(&body, raw[i].data2);
+		if (raw[i].dataLength == 2) {
+			_bufferPutU8(&body, raw[i].data2);
+		}
 	}
 	/* End of Track. */
 	_bufferPutVLQ(&body, 0);
@@ -454,7 +657,7 @@ CompilationStatus emitMidiFile(const MusicProgram * program, const char * output
 		logError(_logger, "Cannot emit a MIDI file from a NULL program.");
 		return FAILED;
 	}
-	const char * path = (outputPath != NULL && outputPath[0] != '\0') ? outputPath : "output.mid";
+	const char * path = (outputPath != NULL && outputPath[0] != '\0') ? outputPath : "a.mid";
 	FILE * file = fopen(path, "wb");
 	if (file == NULL) {
 		logError(_logger, "Cannot open '%s' for writing.", path);
@@ -470,7 +673,10 @@ CompilationStatus emitMidiFile(const MusicProgram * program, const char * output
 	_writeU16BE(file, trackChunks);
 	_writeU16BE(file, MIDI_PPQ);
 
-	_writeConductorChunk(file, program->tempoBPM);
+	if (!_writeConductorChunk(file, program)) {
+		fclose(file);
+		return FAILED;
+	}
 	for (MidiTrackInfo * track = program->tracksHead; track != NULL; track = track->next) {
 		if (!_writeTrackChunk(file, program, track)) {
 			fclose(file);
@@ -479,6 +685,6 @@ CompilationStatus emitMidiFile(const MusicProgram * program, const char * output
 	}
 
 	fclose(file);
-	logDebugging(_logger, "Wrote MIDI file '%s' (%u track chunks, %d BPM).", path, trackChunks, program->tempoBPM);
+	logDebugging(_logger, "Wrote MIDI file '%s' (%u track chunks).", path, trackChunks);
 	return SUCCEEDED;
 }

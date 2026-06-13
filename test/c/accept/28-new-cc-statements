@@ -1,0 +1,9 @@
+track melody = init_track(0);
+
+void main() {
+    set_sustain(melody, 127);
+    set_modulation(melody, 40);
+    set_reverb(melody, 60);
+    play(melody, 60, 2.0);
+    set_sustain(melody, 0);
+}

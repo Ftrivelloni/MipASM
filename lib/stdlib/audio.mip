@@ -1,0 +1,25 @@
+// <stdlib/audio> — core audio constants.
+//
+// Dynamics are note-on velocities (1..127) for the reserved `velocity`
+// variable or set_volume(). Note lengths are `duration` values in beats
+// (1 beat = one quarter note). Pan positions are values for set_pan().
+
+// Dynamics (velocities).
+const int PIANISSIMO = 33;
+const int PIANO = 49;
+const int MEZZO_PIANO = 64;
+const int MEZZO_FORTE = 80;
+const int FORTE = 96;
+const int FORTISSIMO = 112;
+
+// Note lengths (beats).
+const duration WHOLE = 4.0;
+const duration HALF = 2.0;
+const duration QUARTER = 1.0;
+const duration EIGHTH = 0.5;
+const duration SIXTEENTH = 0.25;
+
+// Pan positions (set_pan).
+const int LEFT = 0;
+const int CENTER = 64;
+const int RIGHT = 127;
