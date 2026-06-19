@@ -1,0 +1,85 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "MipASM",
+  "scopeName": "source.mipasm",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#preprocessor" },
+    { "include": "#strings" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#builtins" },
+    { "include": "#constants" },
+    { "include": "#numbers" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.mipasm",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.mipasm",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "preprocessor": {
+      "begin": "^\\s*(#include)\\b",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.directive.include.mipasm" }
+      },
+      "end": "$",
+      "patterns": [
+        { "include": "#strings" }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.other.lt-gt.mipasm",
+      "match": "\"<[A-Za-z0-9_./]+>\""
+    },
+    "keywords": {
+      "name": "keyword.control.mipasm",
+      "match": "\\b(main|if|else|for|while|sync)\\b"
+    },
+    "types": {
+      "name": "storage.type.mipasm",
+      "match": "\\b(void|int|float|boolean|track|duration|const)\\b"
+    },
+    "builtins": {
+      "name": "support.function.mipasm",
+      "match": "\\b(init_track|play|rest|set_volume|set_pan|set_attack|set_sustain|set_modulation|set_reverb|set_tempo|set_instrument|set_time_signature)\\b"
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.note.mipasm",
+          "match": "\\b[A-G]S?[0-8]\\b"
+        },
+        {
+          "name": "constant.other.mipasm",
+          "match": "\\b[A-Z][A-Z0-9_]+\\b"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.mipasm",
+          "match": "\\b[0-9]*\\.[0-9]+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.mipasm",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "operators": {
+      "name": "keyword.operator.mipasm",
+      "match": "(==|!=|<=|>=|&&|\\|\\||[-+*/<>!=])"
+    }
+  }
+}

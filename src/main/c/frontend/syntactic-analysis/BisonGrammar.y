@@ -10,14 +10,39 @@
 #include "BisonActions.h"
 
 /**
- * The error reporting function for Bison parser.
+ * Computes each rule's location (@$) as the span from its first to its last
+ * component — Bison's default behaviour — and additionally records it through
+ * recordParseLocation() so the AST constructors can stamp the nodes they build
+ * (see _locatedNode in BisonActions.c). Defined here, before Bison's own
+ * guarded default, so this version wins.
+ *
+ * @see https://www.gnu.org/software/bison/manual/html_node/Location-Default-Action.html
+ */
+#define YYLLOC_DEFAULT(Current, Rhs, N) \
+	do { \
+		if (N) { \
+			(Current).first_line   = (Rhs)[1].first_line; \
+			(Current).first_column = (Rhs)[1].first_column; \
+			(Current).last_line    = (Rhs)[N].last_line; \
+			(Current).last_column  = (Rhs)[N].last_column; \
+		} else { \
+			(Current).first_line   = (Current).last_line   = (Rhs)[0].last_line; \
+			(Current).first_column = (Current).last_column = (Rhs)[0].last_column; \
+		} \
+		recordParseLocation(&(Current)); \
+	} while (0)
+
+/**
+ * The error reporting function for Bison parser. Prints a "line:column: error"
+ * diagnostic for the offending token so editors (and humans) can locate the
+ * syntax error. The location is populated by the scanner's YY_USER_ACTION.
  *
  * @see https://www.gnu.org/software/bison/manual/html_node/Error-Reporting-Function.html
  * @see https://www.gnu.org/software/bison/manual/html_node/Tracking-Locations.html
  */
 void yyerror(const YYLTYPE * location, const char * message) {
-	(void) location;
-	(void) message;
+	fprintf(stderr, "%d:%d: error: %s\n",
+		location->first_line, location->first_column, message);
 }
 
 %}

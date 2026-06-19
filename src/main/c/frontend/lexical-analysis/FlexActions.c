@@ -260,15 +260,17 @@ CompilationStatus IncludeDirectiveLexemeAction() {
 	}
 	if (_libraryRoot == NULL) {
 		/* Plain stderr (not the logger) so the failure is visible at any
-		   LOGGING_LEVEL, matching the CLI's error style. */
-		fprintf(stderr, "mipasm: fatal error: cannot locate the MipASM library directory; set MIPASM_LIB_PATH\n");
+		   LOGGING_LEVEL. The "line:column:" prefix matches the diagnostic
+		   format the rest of the compiler emits, so editors can place the
+		   error on the offending #include directive. */
+		fprintf(stderr, "%u:1: fatal error: cannot locate the MipASM library directory; set MIPASM_LIB_PATH\n", token->line);
 		status = FAILED;
 	}
 	else {
 		char * canonicalPath = resolveLibraryFile(_libraryRoot, name);
 		if (canonicalPath == NULL) {
-			fprintf(stderr, "mipasm: fatal error: cannot open library '<%s>': no such file '%s/%s.mip'\n",
-				name, _libraryRoot, name);
+			fprintf(stderr, "%u:1: fatal error: cannot open library '<%s>': no such file '%s/%s.mip'\n",
+				token->line, name, _libraryRoot, name);
 			status = FAILED;
 		}
 		else if (_isLibraryLoaded(canonicalPath)) {
@@ -279,7 +281,7 @@ CompilationStatus IncludeDirectiveLexemeAction() {
 			InputBuffer * libraryBuffer = createInputBuffer(_lexicalAnalyzer, canonicalPath);
 			if (libraryBuffer == NULL || libraryBuffer->file == NULL
 				|| !_registerLoadedLibrary(canonicalPath, libraryBuffer)) {
-				fprintf(stderr, "mipasm: fatal error: cannot read library file '%s'\n", canonicalPath);
+				fprintf(stderr, "%u:1: fatal error: cannot read library file '%s'\n", token->line, canonicalPath);
 				destroyInputBuffer(libraryBuffer);
 				free(canonicalPath);
 				status = FAILED;

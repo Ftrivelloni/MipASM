@@ -27,6 +27,23 @@ extern CompilationStatus EOFLexemeAction();
 extern CompilationStatus UnknownLexemeAction();
 extern CompilationStatus IncludeDirectiveLexemeAction();
 
+/**
+ * Runs at the start of every matched rule (after yytext/yyleng are set) to
+ * fill Bison's location (yylloc) for the token. Flex already maintains the
+ * line number (--yylineno); here we also track a 1-based column, resetting it
+ * on every newline. Populating yylloc is what lets the parser, semantic
+ * analyzer and generator report "line:column" diagnostics — without this the
+ * location stays zero. Columns are per-buffer, so they reset across #includes.
+ */
+#define YY_USER_ACTION \
+	yylloc->first_line = yylineno; \
+	yylloc->first_column = yycolumn + 1; \
+	for (int _column = 0; _column < yyleng; ++_column) { \
+		if (yytext[_column] == '\n') { yycolumn = 0; } else { ++yycolumn; } \
+	} \
+	yylloc->last_line = yylineno; \
+	yylloc->last_column = yycolumn;
+
 %}
 
 %x MULTILINE_COMMENT

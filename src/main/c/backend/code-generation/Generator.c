@@ -87,6 +87,8 @@ typedef struct {
 	MusicProgram * program;		/* structured events for the MIDI emitter */
 	double currentTime;
 	unsigned int errorCount;
+	/* The node currently being executed; gives diagnostics their location. */
+	const ASTNode * currentNode;
 } InterpreterContext;
 
 /* INTERPRETER DECLARATIONS */
@@ -99,12 +101,15 @@ static RuntimeValue _evaluateExpression(InterpreterContext * context, ASTNode * 
 
 static void _reportGenerationError(InterpreterContext * context, const char * const format, ...) {
 	context->errorCount++;
-	char message[1024];
+	const SourceLocation location = context->currentNode != NULL
+		? context->currentNode->location
+		: (SourceLocation) {0};
 	va_list arguments;
 	va_start(arguments, format);
-	vsnprintf(message, sizeof(message), format, arguments);
+	fprintf(stderr, "%d:%d: error: ", location.firstLine, location.firstColumn);
+	vfprintf(stderr, format, arguments);
+	fprintf(stderr, "\n");
 	va_end(arguments);
-	logError(_logger, "%s", message);
 }
 
 static RuntimeValue _uninitializedValue(TypeKind type) {
@@ -352,6 +357,7 @@ static RuntimeValue _evaluateExpression(InterpreterContext * context, ASTNode * 
 		_reportGenerationError(context, "Missing expression.");
 		return _uninitializedValue(TYPE_INT);
 	}
+	context->currentNode = node;
 	switch (node->nodeType) {
 		case AST_INT_LIT:
 			return _intValue(node->data.intLit.value);
@@ -608,6 +614,7 @@ static void _executeNode(InterpreterContext * context, ASTNode * node) {
 	if (node == NULL || context->errorCount != 0) {
 		return;
 	}
+	context->currentNode = node;
 	switch (node->nodeType) {
 		case AST_PROGRAM:
 			_pushRuntimeScope(context);

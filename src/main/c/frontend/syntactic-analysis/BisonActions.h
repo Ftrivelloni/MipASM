@@ -14,6 +14,13 @@
 ModuleDestructor initializeBisonActionsModule(CompilerState * compilerState);
 
 /**
+ * Records the source span of the rule currently being reduced. Called by the
+ * parser's YYLLOC_DEFAULT (see BisonGrammar.y) before each semantic action, so
+ * the AST constructors below can stamp the node they create with its location.
+ */
+void recordParseLocation(const YYLTYPE * location);
+
+/**
  * Bison semantic actions.
  */
 
