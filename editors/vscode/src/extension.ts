@@ -4,7 +4,13 @@ import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
 
-import { TYPES, CONTROL_KEYWORDS, BUILTINS, CONSTANT_GROUPS } from "./constants";
+import {
+  TYPES,
+  CONTROL_KEYWORDS,
+  BUILTINS,
+  CONSTANT_GROUPS,
+  STDLIB_DEPENDENCIES
+} from "./constants";
 
 const LANGUAGE_ID = "mipasm";
 const DIAGNOSTIC_SOURCE = "mipasm";
@@ -21,7 +27,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(LANGUAGE_ID, {
-      provideCompletionItems: () => buildCompletions()
+      provideCompletionItems: (doc) => buildCompletions(doc)
     })
   );
 
@@ -46,11 +52,36 @@ export function deactivate(): void {
 
 /* ----------------------------- Autocomplete ----------------------------- */
 
-let completionCache: vscode.CompletionItem[] | undefined;
+// Matches a stdlib import, e.g. `#include "<stdlib/drums>"`, capturing the
+// library name. Library names are plain identifiers (lib/stdlib/<name>.mip).
+const STDLIB_INCLUDE_RE = /#include\s*"<\s*stdlib\/([A-Za-z_][A-Za-z0-9_]*)\s*>"/g;
 
-function buildCompletions(): vscode.CompletionItem[] {
-  if (completionCache) {
-    return completionCache;
+// Language built-ins (keywords, types, statements) are always available; only
+// stdlib constants are gated on imports, so cache the import-independent part.
+let baseCompletionCache: vscode.CompletionItem[] | undefined;
+
+function buildCompletions(doc: vscode.TextDocument): vscode.CompletionItem[] {
+  const items = baseCompletions().slice();
+
+  // Only offer constants from libraries the document actually imports — a
+  // `DRUM_CHANNEL` should not appear unless `<stdlib/drums>` is included.
+  const imported = importedLibraries(doc);
+  for (const group of CONSTANT_GROUPS) {
+    if (!imported.has(group.library)) {
+      continue;
+    }
+    for (const name of group.names) {
+      const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Constant);
+      item.detail = `${group.detail} (stdlib/${group.library})`;
+      items.push(item);
+    }
+  }
+  return items;
+}
+
+function baseCompletions(): vscode.CompletionItem[] {
+  if (baseCompletionCache) {
+    return baseCompletionCache;
   }
   const items: vscode.CompletionItem[] = [];
 
@@ -66,16 +97,35 @@ function buildCompletions(): vscode.CompletionItem[] {
     item.insertText = new vscode.SnippetString(builtin.snippet);
     items.push(item);
   }
-  for (const group of CONSTANT_GROUPS) {
-    for (const name of group.names) {
-      const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Constant);
-      item.detail = `${group.detail} (stdlib)`;
-      items.push(item);
-    }
-  }
 
-  completionCache = items;
+  baseCompletionCache = items;
   return items;
+}
+
+/** The set of stdlib libraries in scope for a document: every `<stdlib/...>`
+ *  it includes, plus the modules those pull in transitively (e.g. chords
+ *  includes scales). */
+function importedLibraries(doc: vscode.TextDocument): Set<string> {
+  const resolved = new Set<string>();
+  const text = doc.getText();
+
+  STDLIB_INCLUDE_RE.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = STDLIB_INCLUDE_RE.exec(text)) !== null) {
+    addLibrary(match[1], resolved);
+  }
+  return resolved;
+}
+
+/** Add a library and everything it transitively includes to `resolved`. */
+function addLibrary(library: string, resolved: Set<string>): void {
+  if (resolved.has(library)) {
+    return;
+  }
+  resolved.add(library);
+  for (const dep of STDLIB_DEPENDENCIES[library] ?? []) {
+    addLibrary(dep, resolved);
+  }
 }
 
 /* ------------------------------- Linting -------------------------------- */

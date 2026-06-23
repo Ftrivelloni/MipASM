@@ -39,14 +39,29 @@ export const BUILTINS: Builtin[] = [
   { name: "set_time_signature", detail: "set_time_signature(numerator, denominator)", snippet: "set_time_signature(${1:4}, ${2:4});" }
 ];
 
-/** Named constants from the standard library, grouped for nicer completion. */
+/** Named constants from the standard library, grouped for nicer completion.
+ *
+ *  Each group is keyed by the stdlib `library` it lives in (the name used in
+ *  `#include "<stdlib/...>"`). Constants are only offered when their library is
+ *  imported by the current document — see STDLIB_DEPENDENCIES for the transitive
+ *  includes that the standard library performs internally. */
 export interface ConstantGroup {
+  /** stdlib module these constants are defined in (lib/stdlib/<library>.mip). */
+  library: string;
   detail: string;
   names: string[];
 }
 
+/** Includes that stdlib modules perform internally, so an explicit import of a
+ *  module also brings these in. Keep in sync with the `#include` lines in
+ *  lib/stdlib/*.mip (currently only chords pulls in scales). */
+export const STDLIB_DEPENDENCIES: Record<string, string[]> = {
+  chords: ["scales"]
+};
+
 export const CONSTANT_GROUPS: ConstantGroup[] = [
   {
+    library: "audio",
     detail: "dynamic / duration / pan",
     names: [
       "PIANISSIMO", "PIANO", "MEZZO_PIANO", "MEZZO_FORTE", "FORTE", "FORTISSIMO",
@@ -55,6 +70,7 @@ export const CONSTANT_GROUPS: ConstantGroup[] = [
     ]
   },
   {
+    library: "notes",
     detail: "note",
     names: [
       "C0", "CS0", "D0", "DS0", "E0", "F0", "FS0", "G0", "GS0", "A0", "AS0", "B0",
@@ -69,6 +85,7 @@ export const CONSTANT_GROUPS: ConstantGroup[] = [
     ]
   },
   {
+    library: "instruments",
     detail: "instrument (GM program)",
     names: [
       "ACOUSTIC_GRAND_PIANO", "BRIGHT_ACOUSTIC_PIANO", "ELECTRIC_GRAND_PIANO", "HONKY_TONK_PIANO",
@@ -96,6 +113,7 @@ export const CONSTANT_GROUPS: ConstantGroup[] = [
     ]
   },
   {
+    library: "drums",
     detail: "drum / percussion",
     names: [
       "DRUM_CHANNEL", "ACOUSTIC_BASS_DRUM", "BASS_DRUM_1", "SIDE_STICK", "ACOUSTIC_SNARE", "HAND_CLAP",
@@ -110,11 +128,19 @@ export const CONSTANT_GROUPS: ConstantGroup[] = [
     ]
   },
   {
-    detail: "scale / chord interval",
+    library: "scales",
+    detail: "scale interval",
     names: [
       "HALF_STEP", "WHOLE_STEP", "MINOR_SECOND", "MAJOR_SECOND", "MINOR_THIRD", "MAJOR_THIRD",
       "PERFECT_FOURTH", "TRITONE", "PERFECT_FIFTH", "MINOR_SIXTH", "MAJOR_SIXTH", "MINOR_SEVENTH",
-      "MAJOR_SEVENTH", "OCTAVE", "FLAT_FIFTH", "SHARP_FIFTH", "DIMINISHED_SEVENTH", "DOMINANT_SEVENTH",
+      "MAJOR_SEVENTH", "OCTAVE"
+    ]
+  },
+  {
+    library: "chords",
+    detail: "chord interval",
+    names: [
+      "FLAT_FIFTH", "SHARP_FIFTH", "DIMINISHED_SEVENTH", "DOMINANT_SEVENTH",
       "MINOR_NINTH", "MAJOR_NINTH", "ELEVENTH", "THIRTEENTH"
     ]
   }

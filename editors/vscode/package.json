@@ -37,8 +37,8 @@
         ],
         "configuration": "./language-configuration.json",
         "icon": {
-          "light": "./images/icon-light.png",
-          "dark": "./images/icon-dark.png"
+          "light": "./images/MipASM.png",
+          "dark": "./images/MipASM.png"
         }
       }
     ],
@@ -55,6 +55,24 @@
         "path": "./snippets/mipasm.code-snippets"
       }
     ],
+    "configurationDefaults": {
+      "editor.tokenColorCustomizations": {
+        "textMateRules": [
+          {
+            "scope": "constant.other.mipasm",
+            "settings": {
+              "foreground": "#C586C0"
+            }
+          },
+          {
+            "scope": "constant.language.note.mipasm",
+            "settings": {
+              "foreground": "#4EC9B0"
+            }
+          }
+        ]
+      }
+    },
     "configuration": {
       "title": "MipASM",
       "properties": {
