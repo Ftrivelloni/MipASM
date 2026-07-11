@@ -1,0 +1,90 @@
+{
+  "Program skeleton": {
+    "prefix": "main",
+    "description": "A minimal MipASM program: an include, a track, and main().",
+    "body": [
+      "#include \"<stdlib/audio>\"",
+      "#include \"<stdlib/instruments>\"",
+      "",
+      "track ${1:lead} = init_track(${2:0});",
+      "",
+      "void main() {",
+      "\tset_tempo(${3:120});",
+      "\tset_instrument(${1:lead}, ${4:ACOUSTIC_GRAND_PIANO});",
+      "\tplay(${1:lead}, ${5:60}, ${6:1.0});",
+      "\t$0",
+      "}"
+    ]
+  },
+  "Track initialization": {
+    "prefix": "init_track",
+    "description": "Declare and initialize a track on a MIDI channel.",
+    "body": [
+      "track ${1:name} = init_track(${2:0});"
+    ]
+  },
+  "sync block": {
+    "prefix": "sync",
+    "description": "Play several statements starting at the same beat.",
+    "body": [
+      "sync {",
+      "\t$0",
+      "}"
+    ]
+  },
+  "play note": {
+    "prefix": "play",
+    "description": "Play a note on a track for a number of beats.",
+    "body": [
+      "play(${1:track}, ${2:60}, ${3:1.0});"
+    ]
+  },
+  "rest": {
+    "prefix": "rest",
+    "description": "Advance the time cursor silently.",
+    "body": [
+      "rest(${1:track}, ${2:1.0});"
+    ]
+  },
+  "for loop": {
+    "prefix": "for",
+    "description": "Count-controlled loop (unrolled at compile time).",
+    "body": [
+      "for (int ${1:i} = 0; ${1:i} < ${2:8}; ${1:i} = ${1:i} + 1) {",
+      "\t$0",
+      "}"
+    ]
+  },
+  "while loop": {
+    "prefix": "while",
+    "description": "Condition-controlled loop.",
+    "body": [
+      "while (${1:condition}) {",
+      "\t$0",
+      "}"
+    ]
+  },
+  "if / else": {
+    "prefix": "if",
+    "description": "Conditional block.",
+    "body": [
+      "if (${1:condition}) {",
+      "\t$0",
+      "}"
+    ]
+  },
+  "set instrument": {
+    "prefix": "set_instrument",
+    "description": "Select a General MIDI program for a track.",
+    "body": [
+      "set_instrument(${1:track}, ${2:VIOLIN});"
+    ]
+  },
+  "set tempo": {
+    "prefix": "set_tempo",
+    "description": "Set the playback tempo in beats per minute.",
+    "body": [
+      "set_tempo(${1:120});"
+    ]
+  }
+}

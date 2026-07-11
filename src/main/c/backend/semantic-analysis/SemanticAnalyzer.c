@@ -45,6 +45,8 @@ typedef struct Scope {
 typedef struct {
 	Scope * scope;
 	unsigned int errorCount;
+	/* The node currently being analyzed; gives diagnostics their location. */
+	const ASTNode * currentNode;
 } AnalyzerContext;
 
 /* PRIVATE FUNCTIONS */
@@ -84,9 +86,12 @@ static const char * _expressionTypeName(ExpressionType type) {
 
 static void _reportError(AnalyzerContext * context, const char * const format, ...) {
 	context->errorCount++;
+	const SourceLocation location = context->currentNode != NULL
+		? context->currentNode->location
+		: (SourceLocation) {0};
 	va_list arguments;
 	va_start(arguments, format);
-	fprintf(stderr, ERROR_COLOR "[ERROR][SemanticAnalyzer] " DEFAULT_COLOR);
+	fprintf(stderr, "%d:%d: error: ", location.firstLine, location.firstColumn);
 	vfprintf(stderr, format, arguments);
 	fprintf(stderr, "\n");
 	va_end(arguments);
@@ -263,6 +268,7 @@ static void _analyzeFor(AnalyzerContext * context, ASTNode * node) {
 	} else {
 		ASTNode assignment = {0};
 		assignment.nodeType = AST_ASSIGNMENT;
+		assignment.location = node->location;
 		assignment.data.assignment.name = node->data.forStmt.initName;
 		assignment.data.assignment.value = node->data.forStmt.initValue;
 		_analyzeAssignment(context, &assignment);
@@ -281,6 +287,7 @@ static void _analyzeNode(AnalyzerContext * context, ASTNode * node) {
 	if (node == NULL) {
 		return;
 	}
+	context->currentNode = node;
 	switch (node->nodeType) {
 		case AST_PROGRAM:
 			_pushScope(context);
@@ -391,6 +398,7 @@ static ExpressionType _analyzeExpression(AnalyzerContext * context, ASTNode * no
 	if (node == NULL) {
 		return EXPR_INVALID;
 	}
+	context->currentNode = node;
 	switch (node->nodeType) {
 		case AST_INT_LIT:
 			return EXPR_INT;
@@ -484,7 +492,8 @@ CompilationStatus executeSemanticAnalysis(CompilerState * compilerState) {
 	logDebugging(_logger, "Analyzing semantics...");
 	AnalyzerContext context = {
 		.scope = NULL,
-		.errorCount = 0
+		.errorCount = 0,
+		.currentNode = NULL
 	};
 	ASTNode * tree = (ASTNode *) compilerState->abstractSyntaxtTree;
 	if (tree == NULL) {

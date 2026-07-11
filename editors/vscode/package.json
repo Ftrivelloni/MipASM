@@ -1,0 +1,107 @@
+{
+  "name": "mipasm",
+  "displayName": "MipASM",
+  "description": "Language support for MipASM (.mip): syntax highlighting, snippets, autocompletion and on-save diagnostics from the mipasm compiler.",
+  "version": "0.1.0",
+  "publisher": "mipasm",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "icon": "images/MipASM.png",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Linters"
+  ],
+  "keywords": [
+    "mipasm",
+    "midi",
+    "music",
+    "dsl"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:mipasm"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "mipasm",
+        "aliases": [
+          "MipASM",
+          "mipasm"
+        ],
+        "extensions": [
+          ".mip"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./images/MipASM.png",
+          "dark": "./images/MipASM.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "mipasm",
+        "scopeName": "source.mipasm",
+        "path": "./syntaxes/mipasm.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "mipasm",
+        "path": "./snippets/mipasm.code-snippets"
+      }
+    ],
+    "configurationDefaults": {
+      "editor.tokenColorCustomizations": {
+        "textMateRules": [
+          {
+            "scope": "constant.other.mipasm",
+            "settings": {
+              "foreground": "#C586C0"
+            }
+          },
+          {
+            "scope": "constant.language.note.mipasm",
+            "settings": {
+              "foreground": "#4EC9B0"
+            }
+          }
+        ]
+      }
+    },
+    "configuration": {
+      "title": "MipASM",
+      "properties": {
+        "mipasm.compilerPath": {
+          "type": "string",
+          "default": "mipasm",
+          "markdownDescription": "Path to the `mipasm` compiler used for on-save diagnostics. A bare command is looked up on `PATH`; if it is not found, the extension falls back to `.build/mipasm` (and `.build-release/mipasm`) inside the workspace folder."
+        },
+        "mipasm.libPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Optional standard-library directory, exported to the compiler as `MIPASM_LIB_PATH`. Leave empty to let `mipasm` locate its library on its own."
+        },
+        "mipasm.lintOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run the compiler and report diagnostics whenever a .mip file is saved or opened."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.0",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.4.0"
+  }
+}

@@ -3,6 +3,7 @@
 
 #include "../../support/logging/Logger.h"
 #include "../../support/type/ModuleDestructor.h"
+#include "../../support/type/SourceLocation.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -81,6 +82,7 @@ struct ASTList {
 
 struct ASTNode {
 	NodeType nodeType;
+	SourceLocation location;
 	union {
 		struct {
 			ASTList * includes;

@@ -212,6 +212,44 @@ folded, and only the resulting timed events reach the MIDI file.
 
 ---
 
+## Diagnostics (error format)
+
+When a program is rejected, every error is written to **standard error** on its
+own line, in the familiar compiler format:
+
+```
+line:column: error: message
+line:column: fatal error: message      # e.g. a missing #include library
+```
+
+For example:
+
+```
+3:15: error: Duplicate declaration of 'x'.
+4:15: error: set_tempo requires a positive BPM, got 0.
+2:5: error: Track 'lead' is not declared.
+1:1: fatal error: cannot open library '<stdlib/nope>': no such file ...
+```
+
+- **Lines and columns are 1-based.** The position is the span of the offending
+  token or expression (computed by the scanner's `YY_USER_ACTION` and Bison's
+  location tracking, then carried on every AST node — see *How it is
+  implemented* below).
+- Errors from each phase use the same format: syntax errors (`yyerror`),
+  semantic errors (`SemanticAnalyzer.c`), generation errors (`Generator.c`) and
+  the `#include` fatals (`FlexActions.c`).
+- The process still exits non-zero and writes no MIDI file. A few human-oriented
+  summary lines (`[ERROR][...] ...`) may also appear; only the `line:column:`
+  lines are machine-readable diagnostics.
+- **Known limitation:** line/column counters reset for each `#include`d file, so
+  a diagnostic inside a library reports a *library-local* position.
+
+This stable format is what the editor tooling parses; see
+[`editors/vscode`](../editors/vscode) for the VS Code extension that turns these
+lines into red squiggles on save.
+
+---
+
 ## How it is implemented
 
 Every music statement flows through the same six-stage pipeline:

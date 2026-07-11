@@ -104,6 +104,26 @@ docker compose down
 | `docker network prune`                  | Removes unused networks from Docker.                    |
 | `docker volume prune`                   | Removes unused volumes from Docker.                     |
 
+## Editor support
+
+A VS Code extension for the language lives in [`editors/vscode`](editors/vscode).
+It provides syntax highlighting, snippets, autocompletion (keywords, built-ins
+and the `stdlib` constants such as `VIOLIN`, `QUARTER`, `C4`) and on-save
+diagnostics: it runs the `mipasm` compiler and turns its `line:column: error:`
+output (see [`doc/LANGUAGE_FEATURES.md`](doc/LANGUAGE_FEATURES.md#diagnostics-error-format))
+into red squiggles on the offending line. To try it:
+
+```bash
+cd editors/vscode
+npm install
+npm run compile
+```
+
+Then open the `editors/vscode` folder in VS Code and press <kbd>F5</kbd> to launch
+an Extension Development Host, or package it with `npx @vscode/vsce package`.
+Point the extension at a compiler with the `mipasm.compilerPath` setting (it
+falls back to `.build/mipasm` in the workspace when `mipasm` is not on `PATH`).
+
 ## CI/CD
 
 To trigger an automatic integration on every push or PR (_Pull Request_), you must activate _GitHub Actions_ in the _Settings_ tab. Use the following configuration:
